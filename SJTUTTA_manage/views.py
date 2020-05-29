@@ -25,7 +25,8 @@ def my_login(request):
     :return:
         <json>
             {"login_status": <str>}
-            ("email_not_found",
+            (possible values:
+            "email_not_found",
             "password_wrong",
             "successful")
     """
@@ -70,9 +71,10 @@ def my_register(request):
     :return:
         <json>
             {"reg_status": <str>}
-            ("email_already_used",
-             "successful",
-             "unknown_errors")
+            (possible values:
+            "email_already_used",
+            "successful",
+            "unknown_errors")
     """
     received_data = json.loads(request.body.decode("utf8", 'ignore'))
     return_data = {"reg_status": ""}
@@ -112,7 +114,7 @@ def my_logout(request):
     :return:
         <json>:
             {"logout_status": <str>}
-            (only return value: "succ")
+            (only possible value: "succ")
     """
     try:
         del request.session['user_id']
@@ -127,7 +129,7 @@ def read_request(req, des_verb):
     """
     Check if is empty. En/decode and load requests
     :param req:         <request>
-    :param des_verb:    <str> a verb descrbing what action is taken, in case of errors
+    :param des_verb:    <str> a verb describing what action is taken, in case of errors
     :return:
     """
     req_body = req.body
@@ -485,32 +487,17 @@ def rollcall_activity(request):
         return JsonResponse(data)
 
 
-def get_method_by_queue_type_redefined(queue_by_type, queue_word):
-    if queue_by_type == "user_id":
-        return UserProfile.objects.get(user_id=queue_word)
-    elif queue_by_type == "email":
-        return UserProfile.objects.get(email=queue_word)
-    else:
-        return UserProfile.objects.get(username=queue_word)
-
-
 @csrf_exempt
 def show_profile(request):
     """
     for a LOGGED_IN user:
     handles the JSON request form "/SJTUTTA_manage/app/ViewProfile" and return JSON data
-        NOT authenticated:      Notification
+        NOT authenticated:      Return a notification in JSON
         authenticated:          Handle request.body and return JSON
     Try for more details about "return".
     :param
         request:
-            (.body)<json>
-                {"queue_word": <str>,
-                 "queue_by_type": <str>}
-                    (only 3 types available in "queue_by_type":
-                    "user_id",
-                    "email",
-                    "username")
+            (a request with no body is enough)
     :return:
         <json>
             {"user_id": <str>,
@@ -520,27 +507,12 @@ def show_profile(request):
              "user_expire_date": <str>,
              "email": <str>,
              "RequestStatus": <str>}
-                (3 possible strings of "RequestStatus":
-                "OK",
-                "NotExist",
-                "QueueTypeError")
+                    (possible strings of "RequestStatus":
+                    "NotAuthenticated",
+                    "SessionExpired",
+                    "CurrentUserNotExist",
+                    "OK")
     """
-
-    # todo: customize it!
-    if not request.user.is_authenticated:
-        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
-    elif "user_id" not in request.session:
-        return JsonResponse({"ERROR": "Session Expired"})
-    # elif False: # sample codes if extra privilege check is required
-    #     return JsonResponse({"ERROR": "You are attempting to access activities list "
-    #                                   "without corresponding privileges."})
-
-    user_id = request.session["user_id"]
-
-    received_data = read_request(request, "access the query demand")
-
-    queue_word = received_data.get("queue_word")
-    queue_by_type = received_data.get("queue_by_type")
 
     _data = {"user_id": "",
              "User Name": "",
@@ -550,21 +522,30 @@ def show_profile(request):
              "email": "",
              "RequestStatus": ""}
 
-    if queue_by_type != "user_id" and queue_by_type != "email" and queue_by_type != "username":
-        _data["RequestStatus"] = "QueueTypeError"
+    if not request.user.is_authenticated:
+        _data["RequestStatus"] = "NotAuthenticated"
+        return JsonResponse(_data)
+    elif "user_id" not in request.session:
+        _data["RequestStatus"] = "SessionExpired"
+        return JsonResponse(_data)
+    # elif False: # sample codes if extra privilege check is required
+    #     return JsonResponse({"ERROR": "You are attempting to access activities list "
+    #                                   "without corresponding privileges."})
+
+    user_id = request.session["user_id"]
+
+    try:
+        queue_result = UserProfile.objects.get(user_id=user_id)
+    except UserProfile.DoesNotExist:
+        _data["RequestStatus"] = "CurrentUserNotExist"
     else:
-        try:
-            queue_result = get_method_by_queue_type_redefined(queue_by_type, queue_word)
-        except UserProfile.DoesNotExist:
-            _data["RequestStatus"] = "NotExist"
-        else:
-            _data["RequestStatus"] = "OK",
-            _data["user_id"] = queue_result.user_id
-            _data["User Name"] = queue_result.username
-            _data["user_phone"] = queue_result.user_phone
-            _data["user_SJTUID"] = queue_result.user_SJTUID
-            _data["user_expire_date"] = queue_result.user_expire_date
-            _data["email"] = queue_result.email
+        _data["user_id"] = queue_result.user_id
+        _data["User Name"] = queue_result.username
+        _data["user_phone"] = queue_result.user_phone
+        _data["user_SJTUID"] = queue_result.user_SJTUID
+        _data["user_expire_date"] = queue_result.user_expire_date
+        _data["email"] = queue_result.email
+        _data["RequestStatus"] = "OK"
 
     return JsonResponse(_data)
 
@@ -574,96 +555,54 @@ def edit_profile(request):
     """
         for a LOGGED_IN user:
         handles the JSON request form "/SJTUTTA_manage/app/EditProfile" and return JSON data
-            NOT authenticated:      Notification
+            NOT authenticated:      Return a notification in JSON
             authenticated:          Handle request.body and return JSON
-        Bear in mind that only three words are editable by ordinary users:
-            email;
+        Bear in mind that only two words are editable by ordinary users:
             user_SJTUID;
             user_phone.
-        And user_id is only used for indexing and searching.
         Try for more details about "return".
         :param
             request:
                 (.body)<json>
-                    {"user_id": <str>
-                     "modified_email": <str>,
-                     "modified_user_SJTUID": <str>,
+                    {"modified_user_SJTUID": <str>,
                      "modified_phone": <str>}
-                     (after formula check done by the frontend, detailed requirements:
-                         email: obeys the normal email formats;
-                         user_SJTUID: PROFILE_LIM_SJTUID_MAX_LEN = 12,
-                                    blank=True,
-                                    default=PROFILE_DEF_SJTUID="";
-                         user_phone: PROFILE_LIM_PHONE_MAX_LENGTH = 11,
-                                blank=True,
-                                default=PROFILE_DEF_PHONE="";
-                     for modified words that are illegal, the function will return the original words and
-                     no edition will be made.)
+                        (assume chars legality checked by the frontend;
+                        if the user only adjusts one of them, please POST the other string as "NoChange".)
         :return:
             <json>
-                {"user_id": <str>,
-                 "User Name": <str>,
-                 "user_phone Before": <str>,
-                 "user_phone After": <str>,
-                 "user_SJTUID Before": <str>,
-                 "user_SJTUID After": <str>,
-                 "user_expire_date": <str>,
-                 "email Before": <str>,
-                 "email After": <str>,
-                 "EditStatus" = <str>}
-                    (* possible strings of "EditStatus":
-                    "OK",
-                    "NotExist")
-        """
+                {"EditStatus": <str>}
+                    (possible strings of "EditStatus":
+                    "NotAuthenticated",
+                    "SessionExpired",
+                    "OK")
+    """
 
-    # todo: customize it!
+    _data = {"EditStatus": ""}
+
     if not request.user.is_authenticated:
-        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+        _data["EditStatus"] = "NotAuthenticated"
+        return JsonResponse(_data)
     elif "user_id" not in request.session:
-        return JsonResponse({"ERROR": "Session Expired"})
+        _data["EditStatus"] = "SessionExpired"
+        return JsonResponse(_data)
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
 
+    user_id = request.session["user_id"]
+    user = UserProfile.objects.get(user_id=user_id)
+
     received_data = read_request(request, "access the adjusting demand")
-    queued_member_id = received_data.get("user_id")
-    modified_email = received_data.get("modified_email")
     modified_user_SJTUID = received_data.get("modified_user_SJTUID")
     modified_phone = received_data.get("modified_phone")
 
-    queue_result = UserProfile.objects.get(user_id=queued_member_id)
-    unmodified_email = queue_result.email
-    unmodified_user_SJTUID = queue_result.user_SJTUID
-    unmodified_Phone = queue_result.user_phone
-    queue_result.email = modified_email
-    queue_result.user_SJTUID = modified_user_SJTUID
-    queue_result.user_phone = modified_phone
-    queue_result.save()
+    if modified_user_SJTUID != "NoChange":
+        user.user_SJTUID = modified_user_SJTUID
+    if modified_phone != "NoChange":
+        user.user_phone = modified_phone
+    user.save()
 
-    _data = {"user_id": "",
-             "User Name": "",
-             "user_phone Before": unmodified_Phone,
-             "user_phone After": "",
-             "user_SJTUID Before": unmodified_user_SJTUID,
-             "user_SJTUID After": "",
-             "user_expire_date": "",
-             "email Before": unmodified_email,
-             "email After": "",
-             "EditStatus": ""}
-
-    try:
-        queue_after_edition = UserProfile.objects.get(user_id=queued_member_id)
-    except UserProfile.DoesNotExist:
-        _data["EditStatus"] = "NotExist"
-    else:
-        _data["user_id"] = queue_after_edition.user_id
-        _data["User Name"] = queue_after_edition.username
-        _data["user_phone After"] = queue_after_edition.user_phone
-        _data["user_SJTUID After"] = queue_after_edition.user_SJTUID
-        _data["user_expire_date"] = queue_after_edition.user_expire_date
-        _data["email After"] = queue_after_edition.email
-        _data["EditStatus"] = "OK"
-
+    _data["EditStatus"] = "OK"
     return JsonResponse(_data)
 
 
