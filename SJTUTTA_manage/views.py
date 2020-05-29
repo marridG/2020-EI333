@@ -192,6 +192,8 @@ def list_activities(request):
 
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif "user_id" not in request.session:
+        return JsonResponse({"ERROR": "Session Expired"})
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
@@ -359,6 +361,8 @@ def rollcall_activity(request):
 
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif "user_id" not in request.session:
+        return JsonResponse({"ERROR": "Session Expired"})
     elif False:  # todo: admin privilege check
         return JsonResponse({"ERROR": "You are attempting to access activities list "
                                       "without corresponding privileges."})
@@ -491,7 +495,6 @@ def get_method_by_queue_type_redefined(queue_by_type, queue_word):
 
 
 @csrf_exempt
-@login_required(redirect_field_name=constants.AUTH_FAIL_REDIRECT)
 def show_profile(request):
     """
     for a LOGGED_IN user:
@@ -526,6 +529,8 @@ def show_profile(request):
     # todo: customize it!
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif "user_id" not in request.session:
+        return JsonResponse({"ERROR": "Session Expired"})
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
@@ -565,7 +570,6 @@ def show_profile(request):
 
 
 @csrf_exempt
-@login_required(redirect_field_name=constants.AUTH_FAIL_REDIRECT)
 def edit_profile(request):
     """
         for a LOGGED_IN user:
@@ -615,6 +619,8 @@ def edit_profile(request):
     # todo: customize it!
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif "user_id" not in request.session:
+        return JsonResponse({"ERROR": "Session Expired"})
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})

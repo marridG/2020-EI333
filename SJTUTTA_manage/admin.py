@@ -3,6 +3,7 @@
 # # Register your models here.
 # Register your models here.
 from django.contrib import admin
+# from django.contrib.auth.models import Permission
 from .models import *
 
 
@@ -56,5 +57,6 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserProfile, UserAdmin)
+# admin.site.register(Permission)
 admin.site.register(Activities)
 admin.site.register(ActivitiesRollCall)
