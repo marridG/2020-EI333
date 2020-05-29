@@ -1,0 +1,6 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea
+SJTUTTA/settings.py
+db.sqlite3
+__pycache__
+SJTUTTA_manange/__pycache__/
