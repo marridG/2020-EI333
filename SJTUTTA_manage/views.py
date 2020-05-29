@@ -1,6 +1,7 @@
 # from django.shortcuts import render
 
 # Create your views here.
+import django.core.exceptions
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -28,21 +29,27 @@ def my_login(request):
             "password_wrong",
             "successful")
     """
-    received_data = json.loads(request.body.decode("utf8", 'ignore'))
     return_data = {"login_status": ""}
+
+    received_data = read_request(request, "log in")
     email = received_data['email']
     password = received_data['password']
+
     try:
-        username = UserProfile.objects.get(email=email)
-    except Exception as e:
+        user_obj = UserProfile.objects.get(email=email)
+        username = user_obj.username
+    # MultipleObjectsReturned Not handled
+    except django.core.exceptions.ObjectDoesNotExist as e:
         return_data["login_status"] = "email_not_found"
         return JsonResponse(return_data)
+
     user = authenticate(request, username=username, password=password)
     if user is not None:
         login(request, user)
         return_data["login_status"] = "successful"
     else:
         return_data["login_status"] = "password_wrong"
+        
     return JsonResponse(return_data)
 
 
@@ -109,6 +116,12 @@ def my_logout(request):
 
 
 def read_request(req, des_verb):
+    """
+    Check if is empty. En/decode and load requests
+    :param req:         <request>
+    :param des_verb:    <str> a verb descrbing what action is taken, in case of errors
+    :return:
+    """
     req_body = req.body
     # if not req_body:
     if req_body is None:
