@@ -45,11 +45,14 @@ def my_login(request):
 
     user = authenticate(request, username=username, password=password)
     if user is not None:
+        # Notice str() is required since <byte>UUID is unsupported in json.dumps
+        request.session["user_id"] = str(user.user_id)
+        request.session.set_expiry(constants.AUTH_LIM_SESSION_EXPIRY)
         login(request, user)
         return_data["login_status"] = "successful"
     else:
         return_data["login_status"] = "password_wrong"
-        
+
     return JsonResponse(return_data)
 
 
@@ -111,6 +114,11 @@ def my_logout(request):
             {"logout_status": <str>}
             (only return value: "succ")
     """
+    try:
+        del request.session['user_id']
+    except KeyError:
+        pass
+
     logout(request)
     return JsonResponse({"logout_status": "succ"})
 
@@ -168,7 +176,6 @@ def form_user_info_dict(_user, show_id=False):
 
 
 @csrf_exempt
-@login_required(redirect_field_name=constants.AUTH_FAIL_REDIRECT)
 def list_activities(request):
     """
     for a LOGGED_IN user:
@@ -176,47 +183,46 @@ def list_activities(request):
         NOT authenticated:      Notification
         authenticated:          Handle request.body and return JSON
     Try for more details about "return".
-    :param request:     (.body)<json>   {"user_id": <str>}
+    :param request:     None
     :return:    <json>  {"Fields": <list>some info, "Request": <json>requested data,
                             "Ongoing Activities": <list> of <dict>, "Attended Activities Count": <int>,
                             "Attended Activities": <list> of <dict>, "Upcoming Activities Count": <int>,
                             "Upcoming Activities": <list> of <dict>}
     """
 
-    # authenticated = True
-    #
-    # if not authenticated:
-    #     # print("Not Authenticated")
-    #     return JsonResponse({
-    #         "ERROR": "You are attempting to access activities list without corresponding privileges."})
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    # elif False: # sample codes if extra privilege check is required
+    #     return JsonResponse({"ERROR": "You are attempting to access activities list "
+    #                                   "without corresponding privileges."})
 
-    received_data = read_request(request, "accessing the list of attended activities")
-
-    # todo safety concerns
-    user_id = received_data.get("user_id")  # todo cope with frontend var name
+    user_id = request.session["user_id"]
 
     # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTACTIVITY_INFO
     _data_info = {
-        "Fields": [{"Fields": "DEBUG"}, {"Request": "DEBUG"},
-                   {"Ongoing Activities": [
-                       "start_time <= now < end_time",
-                       "order by start_time, the more in the past, the more in the front",
-                       "attributes of 'time'(start&end) follows 'time.struct_time'"
-                   ]},
-                   {"Attended Activities Count": None},
-                   {"Attended Activities": [
-                       "not-ongoing & past & attended event(s)"
-                       "past: end_time <= now",
-                       "order by start_time, the more in the past, the more in the front",
-                       "attributes of 'time'(start&end) follows 'time.struct_time'"
-                   ]},
-                   {"Upcoming Activities Count": None},
-                   {"Upcoming Activities": [
-                       "not-ongoing & upcoming event(s)",
-                       "upcoming: now < start_time",
-                       "order by start_time, the more in the past, the more in the front",
-                       "attributes of 'time'(start&end) follows 'time.struct_time'"]}],
-        "Request": received_data}
+        "Fields": [
+            {"Fields": "DEBUG"}, {"Request User ID": "DEBUG"},
+            {"Ongoing Activities": [
+                "start_time <= now < end_time",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"
+            ]},
+            {"Attended Activities Count": None},
+            {"Attended Activities": [
+                "not-ongoing & past & attended event(s)"
+                "past: end_time <= now",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"
+            ]},
+            {"Upcoming Activities Count": None},
+            {"Upcoming Activities": [
+                "not-ongoing & upcoming event(s)",
+                "upcoming: now < start_time",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"]}
+        ],
+        "Request User ID": user_id
+    }
     _data = {
         "Ongoing Activities": [],
         "Attended Activities Count": 0,
@@ -232,7 +238,7 @@ def list_activities(request):
     activities_lst = Activities.objects.order_by("activity_start_time")
     for _act in activities_lst:
         _attended = ActivitiesRollCall.objects.filter(
-            activity__activity_id=_act.activity_id, participant__name=user_id).exists()  # todo
+            activity__activity_id=_act.activity_id, participant__user_id=user_id).exists()
         _d = form_activity_info_dict(_act=_act, show_id=False)
 
         if _act.activity_end_time < now:  # attended
@@ -332,7 +338,6 @@ def rollcall_asst_validate_request(data):
 
 
 @csrf_exempt
-@login_required(redirect_field_name=constants.AUTH_FAIL_REDIRECT)
 def rollcall_activity(request):
     """
     Search for users and roll call
@@ -352,12 +357,11 @@ def rollcall_activity(request):
     :return:
     """
 
-    # authenticated = True
-    #
-    # if not authenticated:
-    #     # print("Not Authenticated")
-    #     return JsonResponse({
-    #         "ERROR": "You are attempting to roll call an activity without corresponding privileges."})
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif False:  # todo: admin privilege check
+        return JsonResponse({"ERROR": "You are attempting to access activities list "
+                                      "without corresponding privileges."})
 
     received_data = read_request(request, "roll call an activity")
     # print(received_data)

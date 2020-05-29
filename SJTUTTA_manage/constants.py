@@ -13,7 +13,6 @@ ACTIVITY_DEF_DESCRIPTION = "欢迎各位参加.\nWelcome."
 ACTIVITY_LIM_TITLE_MAX_LEN = 100
 ACTIVITY_LIM_LOCATION_MAX_LEN = 50
 
-
 # UserProfile Related: Defaults(DEF), Limits(LIM), etc.
 PROFILE_LIM_PHONE_MAX_LENGTH = 11
 PROFILE_DEF_PHONE = ""
@@ -22,3 +21,4 @@ PROFILE_DEF_SJTUID = ""
 
 # Redirection url if user authentication is failed
 AUTH_FAIL_REDIRECT = ""
+AUTH_LIM_SESSION_EXPIRY = 100 * 60  # seconds

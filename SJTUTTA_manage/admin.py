@@ -56,5 +56,5 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserProfile, UserAdmin)
-admin.site.register(Activities, UserAdmin)
-admin.site.register(ActivitiesRollCall, UserAdmin)
+admin.site.register(Activities)
+admin.site.register(ActivitiesRollCall)
