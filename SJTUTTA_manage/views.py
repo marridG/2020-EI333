@@ -523,13 +523,16 @@ def show_profile(request):
                 "QueueTypeError")
     """
 
-    # authenticated = True
-    #
-    # if not authenticated:
-    #     return JsonResponse({
-    #         "ERROR": "You are attempting to access activities list without corresponding privileges."})
+    # todo: customize it!
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    # elif False: # sample codes if extra privilege check is required
+    #     return JsonResponse({"ERROR": "You are attempting to access activities list "
+    #                                   "without corresponding privileges."})
 
-    received_data = read_request(request, "accessing the query demand")
+    user_id = request.session["user_id"]
+
+    received_data = read_request(request, "access the query demand")
 
     queue_word = received_data.get("queue_word")
     queue_by_type = received_data.get("queue_by_type")
@@ -609,13 +612,14 @@ def edit_profile(request):
                     "NotExist")
         """
 
-    # authenticated = True
-    #
-    # if not authenticated:
-    #     return JsonResponse({
-    #         "ERROR": "You are attempting to access activities list without corresponding privileges."})
+    # todo: customize it!
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    # elif False: # sample codes if extra privilege check is required
+    #     return JsonResponse({"ERROR": "You are attempting to access activities list "
+    #                                   "without corresponding privileges."})
 
-    received_data = read_request(request, "accessing the adjusting demand")
+    received_data = read_request(request, "access the adjusting demand")
     queued_member_id = received_data.get("user_id")
     modified_email = received_data.get("modified_email")
     modified_user_SJTUID = received_data.get("modified_user_SJTUID")

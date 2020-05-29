@@ -22,3 +22,5 @@ PROFILE_DEF_SJTUID = ""
 # Redirection url if user authentication is failed
 AUTH_FAIL_REDIRECT = ""
 AUTH_LIM_SESSION_EXPIRY = 100 * 60  # seconds
+
+# admin @GuoZL: username: admin, password: 1
