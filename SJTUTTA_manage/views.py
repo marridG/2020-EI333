@@ -429,7 +429,7 @@ def rollcall_activity(request):
     # Select Activity
     elif 2 == op_id:
         in_id = received_data.get("Activity_Selected")
-        _act = Activities.objects.get(activity_id=in_id)  # todo: safety concerns, activity_id leakage
+        _act = Activities.objects.get(activity_id=in_id)
         data["Activity"] = form_activity_info_dict(_act=_act, show_id=False)
 
         return JsonResponse(data)
@@ -582,7 +582,7 @@ def edit_profile(request):
     #                                   "without corresponding privileges."})
 
     user_id = request.user.user_id
-    user = UserProfile.objects.get(user_id=user_id) # todo user=request.user
+    user = UserProfile.objects.get(user_id=user_id)  # todo user=request.user
 
     received_data = read_request(request, "access the adjusting demand")
     modified_user_SJTUID = received_data.get("modified_user_SJTUID")
