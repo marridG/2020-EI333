@@ -584,8 +584,9 @@ def edit_profile(request):
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
 
-    user_id = request.user.user_id
-    user = UserProfile.objects.get(user_id=user_id)  # todo user=request.user
+    # user_id = request.user.user_id
+    # user = UserProfile.objects.get(user_id=user_id)
+    user = request.user
 
     received_data = read_request(request, "access the adjusting demand")
     modified_user_SJTUID = received_data.get("modified_user_SJTUID")
