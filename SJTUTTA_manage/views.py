@@ -49,6 +49,7 @@ def my_login(request):
         # Notice str() is required since <byte>UUID is unsupported in json.dumps
         request.session["user_id"] = str(user.user_id)
         request.session.set_expiry(constants.AUTH_LIM_SESSION_EXPIRY)
+        request.session.modified = True
         login(request, user)
         return_data["login_status"] = "successful"
     else:
@@ -185,7 +186,7 @@ def list_activities(request):
         NOT authenticated:      Notification
         authenticated:          Handle request.body and return JSON
     Try for more details about "return".
-    :param request:     None
+    :param request:     None (should include sessionid in Cookies to authenticate user/anonymous)
     :return:    <json>  {"Fields": <list>some info, "Request": <json>requested data,
                             "Ongoing Activities": <list> of <dict>, "Attended Activities Count": <int>,
                             "Attended Activities": <list> of <dict>, "Upcoming Activities Count": <int>,
@@ -194,13 +195,11 @@ def list_activities(request):
 
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
-    elif "user_id" not in request.session:
-        return JsonResponse({"ERROR": "Session Expired"})
-    # elif False: # sample codes if extra privilege check is required
+    # elif not request.user.has_perm("SJTUTTA_manage.view_Activities"): # no constraints here
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
 
-    user_id = request.session["user_id"]
+    user_id = request.user.user_id
 
     # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTACTIVITY_INFO
     _data_info = {
@@ -355,6 +354,7 @@ def rollcall_activity(request):
                                     "Activity_Selected": <str>activity_id/None,
                                     "User_Selected": <str>user_id/None,
                                     "Submit": None/{"activity_id": <str>, "user_id": <str>} }
+                    * should include sessionid in Cookies to authenticate user/admin
                     * >=1 sub-args must be given
                     * while querying, "_Selected"&not-under-query are all empty;
                       while selecting, "_Query"&not-selected are all empty
@@ -363,10 +363,8 @@ def rollcall_activity(request):
 
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
-    elif "user_id" not in request.session:
-        return JsonResponse({"ERROR": "Session Expired"})
-    elif False:  # todo: admin privilege check
-        return JsonResponse({"ERROR": "You are attempting to access activities list "
+    elif not request.user.has_perm("SJTUTTA_manage.add_activitiesrollcall"):
+        return JsonResponse({"ERROR": "You are attempting to access activities roll call"
                                       "without corresponding privileges."})
 
     received_data = read_request(request, "roll call an activity")
@@ -525,14 +523,11 @@ def show_profile(request):
     if not request.user.is_authenticated:
         _data["RequestStatus"] = "NotAuthenticated"
         return JsonResponse(_data)
-    elif "user_id" not in request.session:
-        _data["RequestStatus"] = "SessionExpired"
-        return JsonResponse(_data)
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
 
-    user_id = request.session["user_id"]
+    user_id = request.user.user_id
 
     try:
         queue_result = UserProfile.objects.get(user_id=user_id)
@@ -582,15 +577,12 @@ def edit_profile(request):
     if not request.user.is_authenticated:
         _data["EditStatus"] = "NotAuthenticated"
         return JsonResponse(_data)
-    elif "user_id" not in request.session:
-        _data["EditStatus"] = "SessionExpired"
-        return JsonResponse(_data)
     # elif False: # sample codes if extra privilege check is required
     #     return JsonResponse({"ERROR": "You are attempting to access activities list "
     #                                   "without corresponding privileges."})
 
-    user_id = request.session["user_id"]
-    user = UserProfile.objects.get(user_id=user_id)
+    user_id = request.user.user_id
+    user = UserProfile.objects.get(user_id=user_id) # todo user=request.user
 
     received_data = read_request(request, "access the adjusting demand")
     modified_user_SJTUID = received_data.get("modified_user_SJTUID")
