@@ -328,7 +328,7 @@ def rollcall_asst_validate_request(data):
         return True, 4
 
     # Submit
-    else:  # date.get("Submit")
+    elif data.get("Submit"):
         for _f in ["Activity_Query", "User_Query", "Activity_Selected", "User_Selected"]:  # extra args
             if data.get(_f):
                 raise RuntimeError("Extra \"%s\" given when submitting log" % _f)
@@ -338,6 +338,9 @@ def rollcall_asst_validate_request(data):
             raise RuntimeError("Missing either/both (activity_id, user_id) when submitting")
 
         return True, 5
+
+    else:  # otherwise
+        raise RuntimeError("Missing Required Identifiers (Query_Activity, etc.)")
 
 
 @csrf_exempt
@@ -364,8 +367,8 @@ def rollcall_activity(request):
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
     elif not request.user.has_perm("SJTUTTA_manage.add_activitiesrollcall"):
-        return JsonResponse({"ERROR": "You are attempting to access activities roll call"
-                                      "without corresponding privileges."})
+        return JsonResponse({"ERROR": "Attempting to Access Activities Roll Call"
+                                      "without Corresponding Privileges."})
 
     received_data = read_request(request, "roll call an activity")
     # print(received_data)
@@ -463,7 +466,7 @@ def rollcall_activity(request):
     # Select User
     elif 4 == op_id:
         in_id = received_data.get("User_Selected")
-        _act = UserProfile.objects.get(user_id=in_id)  # todo: safety concerns, activity_id leakage
+        _act = UserProfile.objects.get(user_id=in_id)
         data["User"] = form_user_info_dict(_user=_act, show_id=False)
 
         return JsonResponse(data)
