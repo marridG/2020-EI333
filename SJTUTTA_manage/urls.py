@@ -4,10 +4,13 @@ from . import views
 # frontend guys please notice:
 # urls below are only used for posting and getting data in json formula
 urlpatterns = [
-    # ex: app/activities/ # displays the activities list
+    # [Activities]
     path("app/activities/", views.list_activities),
-    # ex: app/rollcall/ # roll call an activity
-    path("app/rollcall/", views.rollcall_activity),
+    path("app/activities/rollcall/", views.rollcall_activity),
+
+    # [Store]
+    path("app/store/items/new/", views.store_newitem),
+
     path("app/ViewProfile", views.show_profile),
     path("app/EditProfile", views.edit_profile),
     path("app/login", views.my_login),

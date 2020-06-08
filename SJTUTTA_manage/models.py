@@ -103,7 +103,7 @@ class StoreItems(models.Model):
                                            max_length=constants.STORE_INFO_LIM_SIZE_MAX_LENGTH,
                                            default=constants.STORE_INFO_DEF_SIZE)
     commodity_info_description = models.TextField("Description", editable=True, blank=True,
-                                                  default=constants.ACTIVITY_DEF_DESCRIPTION)
+                                                  default=constants.STORE_INFO_DEF_DESCRIPTION)
     commodity_info_image = models.TextField("Image URL", editable=True, blank=True,
                                             default=constants.STORE_INFO_DEF_IMAGE)
     commodity_info_price = models.FloatField("Price", editable=False, blank=False,

@@ -182,6 +182,10 @@ def form_user_info_dict(_user, show_id=False):
     return _d
 
 
+def form_item_info_dict():
+    pass
+
+
 @csrf_exempt
 def list_activities(request):
     """
@@ -490,6 +494,56 @@ def rollcall_activity(request):
             data["Failed"] = "Failed at Submit: %s" % (str(err))
 
         return JsonResponse(data)
+
+
+@csrf_exempt
+def store_newitem(request):
+    """
+    :param request:
+        (.body)<json> {"Info": {"type": <str>/None, "title": <str>/None,
+                                "size": <str>/None, "description": <str>/None,
+                                "image": <str>/None, "price": <str, as float>/None}
+                        "Status": {"stock": <str, as int>/None,
+                                    "availability": <str, as bool: True/False>/None}}
+            * should include sessionid in Cookies to authenticate user/admin
+            * "Info", "Status" and sub-keys must be given, although they may map to ""(None) values
+            * DEFAULT value will be assigned to unfilled arguments
+            * Notice that value/type validation is not conducted in backend
+    :return:
+        (.body)<json>   1. Fail with Request Parsing Error
+                                {"Fail": <str>Error Message}
+                        2. Success
+                                {"Success": Created Commodity ID}
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif not request.user.has_perm("SJTUTTA_manage.add_storeitems"):
+        return JsonResponse({"ERROR": "Attempting to Access Store New Item"
+                                      "without Corresponding Privileges."})
+
+    try:
+        received_data = read_request(request, "add items to store")
+        info = eval(str(received_data.get("Info")))
+        status = eval(str(received_data.get("Status")))
+
+        in_kwargs = {"commodity_info_type": info.get("type"),
+                     "commodity_info_title": info.get("title"),
+                     "commodity_info_size": info.get("size"),
+                     "commodity_info_description": info.get("description"),
+                     "commodity_info_image": info.get("image"),
+                     "commodity_info_price": info.get("price"),
+                     "commodity_status_stock": status.get("stock"),
+                     "commodity_status_availability": status.get("availability")}
+        # delete empty key-value
+        for k in list(in_kwargs.keys()):
+            if not in_kwargs[k]:
+                del in_kwargs[k]
+    except Exception as e:
+        return JsonResponse({"Fail": "Invalid Request: %s" % e})
+    else:
+        new_item_obj = StoreItems.objects.create(**in_kwargs)
+
+        return JsonResponse({"Success": new_item_obj.commodity_id})
 
 
 @csrf_exempt
