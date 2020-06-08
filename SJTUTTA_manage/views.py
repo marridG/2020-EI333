@@ -204,7 +204,7 @@ def form_commodity_info_dict(_item, show_id=False):
 
 
 @csrf_exempt
-def list_activities(request):
+def activities_list_all(request):
     """
     for a LOGGED_IN user:
     handles the JSON request form "/app/activities/" and return JSON data
@@ -280,6 +280,47 @@ def list_activities(request):
             data["Ongoing Activities"].append(_d)
 
     return JsonResponse(data)
+
+
+@csrf_exempt
+def activities_new_activity(request):
+    """
+    :param request:
+        (.body)<json> {"title": <str>/None,
+                        "start time", "end time": <str, as UTC+8 datetime>,
+                            "YEAR-MONTH-DAY HOUR:MINUTE" e.g. "2020-6-8 23:20"
+                        "location": <str>/None,
+                        "description": <str>/None}
+            * should include sessionid in Cookies to authenticate user/admin
+            * [NOT Recommended] DEFAULT value 'll be assigned to unfilled "title" & "location"
+            * Notice that value/type validation is not conducted in backend
+    :return:
+        (.body)<json>   if Success: {"Success": Created Activity ID} else a raised error
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif not request.user.has_perm("SJTUTTA_manage.add_activities"):
+        return JsonResponse({"ERROR": "Attempting to Add New Activities"
+                                      "without Corresponding Privileges."})
+
+    try:
+        received_data = read_request(request, "add new activities")
+
+        in_kwargs = {"activity_start_time":
+                         datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M"),
+                     "activity_end_time":
+                         datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M"),
+                     "activity_description": received_data.get("description")}
+        if received_data.get("title"):
+            in_kwargs["activity_title"]=received_data.get("title")
+        if received_data.get("location"):
+            in_kwargs["activity_location"]=received_data.get("location")
+    except Exception as e:
+        raise RuntimeError("Invalid Request: %s" % e)
+    else:
+        new_item_obj = Activities.objects.create(**in_kwargs)
+
+        return JsonResponse({"Success": new_item_obj.commodity_id})
 
 
 def rollcall_asst_validate_request(data):
@@ -527,19 +568,16 @@ def store_new_item(request):
             * DEFAULT value will be assigned to unfilled arguments
             * Notice that value/type validation is not conducted in backend
     :return:
-        (.body)<json>   1. Fail with Request Parsing Error
-                                {"Fail": <str>Error Message}
-                        2. Success
-                                {"Success": Created Commodity ID}
+        (.body)<json>   if Success: {"Success": Created Activity ID} else a raised error
     """
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
     elif not request.user.has_perm("SJTUTTA_manage.add_storeitems"):
-        return JsonResponse({"ERROR": "Attempting to Access Store New Item"
+        return JsonResponse({"ERROR": "Attempting to Add New Commodities"
                                       "without Corresponding Privileges."})
 
     try:
-        received_data = read_request(request, "add items to store")
+        received_data = read_request(request, "add new commodities")
         info = eval(str(received_data.get("Info")))
         status = eval(str(received_data.get("Status")))
 
@@ -591,10 +629,10 @@ def store_edit_item(request):
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
     elif (not request.user.has_perm("SJTUTTA_manage.view_storeitems")) or \
             (not request.user.has_perm("SJTUTTA_manage.change_storeitems")):
-        return JsonResponse({"ERROR": "Attempting to Access Store Edit Items"
+        return JsonResponse({"ERROR": "Attempting to Edit Commodities Info"
                                       "without Corresponding Privileges."})
 
-    received_data = read_request(request, "edit commodities")
+    received_data = read_request(request, "edit commodities Info")
     _keys = received_data.keys()
     if not ("Items Query" in _keys) ^ ("Edits" in _keys):
         raise RuntimeError("Neither/Both of 'Items Query'/'Edits' is/are given")
@@ -786,6 +824,6 @@ def edit_profile(request):
     return JsonResponse(_data)
 
 
-# local time, as Beijing (CST)
-bj_CST = timezone(timedelta(hours=8))
-now = datetime.now().astimezone(bj_CST)
+# local time, as Beijing (CST, UTC+8)
+# bj_CST = timezone(timedelta(hours=8))
+now = datetime.now()  # .astimezone(bj_CST)
