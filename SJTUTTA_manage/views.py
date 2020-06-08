@@ -166,7 +166,7 @@ def form_activity_info_dict(_act, show_id=False):
 
 def form_user_info_dict(_user, show_id=False):
     """
-    :param _user:        <object>
+    :param _user:       <object>
     :param show_id:     <bool>
     :return:
     """
@@ -182,8 +182,25 @@ def form_user_info_dict(_user, show_id=False):
     return _d
 
 
-def form_item_info_dict():
-    pass
+def form_commodity_info_dict(_item, show_id=False):
+    """
+    :param _item:       <object>
+    :param show_id:     <bool>
+    :return:
+    """
+    _d = {"type": _item.commodity_info_type,
+          "title": _item.commodity_info_title,
+          "size": _item.commodity_info_size,
+          "description": _item.commodity_info_description,
+          "image": _item.commodity_info_image,
+          "price": _item.commodity_info_price,
+          "stock": _item.commodity_status_stock,
+          "availability": _item.commodity_status_availability}
+
+    if show_id:
+        _d["id"] = _item.commodity_id
+
+    return _d
 
 
 @csrf_exempt
@@ -497,7 +514,7 @@ def rollcall_activity(request):
 
 
 @csrf_exempt
-def store_newitem(request):
+def store_new_item(request):
     """
     :param request:
         (.body)<json> {"Info": {"type": <str>/None, "title": <str>/None,
@@ -539,11 +556,120 @@ def store_newitem(request):
             if not in_kwargs[k]:
                 del in_kwargs[k]
     except Exception as e:
-        return JsonResponse({"Fail": "Invalid Request: %s" % e})
+        raise RuntimeError("Invalid Request: %s" % e)
     else:
         new_item_obj = StoreItems.objects.create(**in_kwargs)
 
         return JsonResponse({"Success": new_item_obj.commodity_id})
+
+
+@csrf_exempt
+def store_edit_item(request):
+    """
+    Search for users and roll call
+    Frontend Steps:
+        1. Query items          ==returned==>       Select items
+        2. Submit Item Edits
+    :param request:
+         (.body)<json> {"Items Query": None/<dict>
+                             {"type": <str>/None, "title": <str>/None,
+                                 "availability": <str, as bool: True/False>/None},
+                         "Edits": None/<dict>
+                             {"Edits Count": <int>,
+                                 "Edits": <list> of <dict>
+                                     {"id": <str>commodity id,
+                                         "type": <str>/None, "description": <str>/None,
+                                         "image": <str>/None, "stock": <str, as int>/None,
+                                         "availability": <str, as bool: True/False>/None}}
+            * should include sessionid in Cookies to authenticate user/admin
+            * EXACTLY one of "Items_Qeury"/"Edits" should be included
+            * all sub-keys of the given key ("I_Q"/"E") must be included,
+                although they may map to ""(None)
+    :return:
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif (not request.user.has_perm("SJTUTTA_manage.view_storeitems")) or \
+            (not request.user.has_perm("SJTUTTA_manage.change_storeitems")):
+        return JsonResponse({"ERROR": "Attempting to Access Store Edit Items"
+                                      "without Corresponding Privileges."})
+
+    received_data = read_request(request, "edit commodities")
+    _keys = received_data.keys()
+    if not ("Items Query" in _keys) ^ ("Edits" in _keys):
+        raise RuntimeError("Neither/Both of 'Items Query'/'Edits' is/are given")
+
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_EDITITEM_INFO
+    _data_info = {
+        "Fields": [{"Fields": "DEBUG"}, {"Request": "DEBUG"},
+                   {"Items": [
+                       "queried items",
+                       "order by availability(True->False), then ascending by type, title",
+                   ]},
+                   {"Items Count": ""},
+                   {"Results": "<dict> Status of Submitting the Edits"
+                               "{Fail:<list>Message} and {Success:<list>ID}"}],
+        "Request": received_data}
+    _data = {"Items": [], "Items Count": 0,  # return with values only querying
+             "Results": {"Fail": [], "Success": []}}  # return with values only submitting
+    if constants.DEBUG_EDITITEM_INFO:
+        data = {**_data_info, **_data}
+    else:
+        data = _data
+
+    # Query Items
+    if "Items Query" in _keys:
+        res_query_obj = StoreItems.objects.order_by("-commodity_status_availability"). \
+            order_by("commodity_info_type").order_by("commodity_info_title")
+        in_dt = eval(str(received_data.get("Items Query")))
+        in_type = in_dt.get("type")
+        in_title = in_dt.get("title")
+        in_availability = in_dt.get("availability")
+        if in_type:
+            res_query_obj = res_query_obj.filter(commodity_info_type__icontains=in_type)
+        if in_title:
+            res_query_obj = res_query_obj.filter(commodity_info_title__icontains=in_title)
+        if in_availability:
+            res_query_obj = res_query_obj.filter(commodity_status_availability=in_availability)
+
+        for _itm in res_query_obj:
+            _d = form_commodity_info_dict(_item=_itm, show_id=True)
+            data["Items"].append(_d)
+            data["Items Count"] += 1
+
+        return JsonResponse(data)
+
+    # Edit Items
+    else:  # if "Edits" in _keys:
+        in_dt = eval(str(received_data.get("Edits")))
+        edits_cnt = in_dt.get("Edits Count")
+        edits_target = in_dt.get("Edits")
+
+        if edits_cnt != len(edits_target):
+            raise RuntimeError("Invalid Request Data: Edits Count does not Match")
+
+        for edit in edits_target:
+            edit_id = edit.get("id")
+            target_obj = StoreItems.objects.get(commodity_id=edit_id)
+            if not target_obj:
+                data["Results"]["Fail"].append("%s: Invalid Item id" % edit_id)
+                continue
+
+            if edit.get("type"):
+                target_obj.commodity_info_type = edit.get("type")
+            if edit.get("description"):
+                target_obj.commodity_info_description = edit.get("description")
+            if edit.get("image"):
+                target_obj.commodity_info_image = edit.get("image")
+            if edit.get("stock"):
+                target_obj.commodity_status_stock = edit.get("stock")
+            if edit.get("availability"):
+                target_obj.commodity_status_availability = edit.get("availability")
+
+            target_obj.save()
+            data["Results"]["Success"].append(edit_id)
+
+        return JsonResponse(data)
 
 
 @csrf_exempt

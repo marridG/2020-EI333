@@ -9,7 +9,8 @@ urlpatterns = [
     path("app/activities/rollcall/", views.rollcall_activity),
 
     # [Store]
-    path("app/store/items/new/", views.store_newitem),
+    path("app/store/items/new/", views.store_new_item),
+    path("app/store/items/edit/", views.store_edit_item),
 
     path("app/ViewProfile", views.show_profile),
     path("app/EditProfile", views.edit_profile),

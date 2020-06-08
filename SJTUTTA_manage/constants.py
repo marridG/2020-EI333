@@ -4,6 +4,7 @@ from datetime import timedelta
 DEBUG_MODE = True  # global switch
 DEBUG_LISTACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude debug info in the returned JSON
 DEBUG_ROLLCALLACTIVITY_INFO = DEBUG_MODE and True  # [roll call activity]: ex/include debug info in the returned JSON
+DEBUG_EDITITEM_INFO = DEBUG_MODE and True  # [edit commodity items]: ex/include debug info in the returned JSON
 
 # Activities Related: Defaults(DEF), Limits(LIM), etc.
 ACTIVITY_DEF_TITLE = "乒协活动 SJTUTTA"
