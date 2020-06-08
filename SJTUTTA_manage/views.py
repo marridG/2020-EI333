@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import *
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from . import constants
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.decorators import login_required
@@ -26,6 +26,7 @@ def my_login(request):
         <json>
             {"login_status": <str>}
             (possible values:
+            "membership_expired"
             "email_not_found",
             "password_wrong",
             "successful")
@@ -46,6 +47,9 @@ def my_login(request):
 
     user = authenticate(request, username=username, password=password)
     if user is not None:
+        if user.user_expire_date < date.today():
+            return_data["login_status"] = "membership_expired"
+            return JsonResponse(return_data)
         # Notice str() is required since <byte>UUID is unsupported in json.dumps
         request.session["user_id"] = str(user.user_id)
         request.session.set_expiry(constants.AUTH_LIM_SESSION_EXPIRY)
