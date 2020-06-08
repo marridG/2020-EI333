@@ -87,3 +87,37 @@ class ActivitiesRollCall(models.Model):
 
     class Meta:
         verbose_name_plural = "Activities - Roll Call"
+
+
+class StoreItems(models.Model):
+    # id
+    commodity_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    # information
+    commodity_info_type = models.CharField("Type", editable=True, blank=False,
+                                           max_length=constants.STORE_INFO_LIM_TYPE_MAX_LENGTH,
+                                           default=constants.STORE_INFO_DEF_TYPE)
+    commodity_info_title = models.CharField("Title", editable=False, blank=False,
+                                            max_length=constants.STORE_INFO_LIM_TITLE_MAX_LENGTH,
+                                            default=constants.STORE_INFO_DEF_TITLE)
+    commodity_info_size = models.CharField("Size", editable=False, blank=False,
+                                           max_length=constants.STORE_INFO_LIM_SIZE_MAX_LENGTH,
+                                           default=constants.STORE_INFO_DEF_SIZE)
+    commodity_info_description = models.TextField("Description", editable=True, blank=True,
+                                                  default=constants.ACTIVITY_DEF_DESCRIPTION)
+    commodity_info_image = models.TextField("Image URL", editable=True, blank=True,
+                                            default=constants.STORE_INFO_DEF_IMAGE)
+    commodity_info_price = models.FloatField("Price", editable=False, blank=False,
+                                             default=constants.STORE_INFO_DEF_PRICE)
+    # status
+    commodity_status_stock = models.PositiveIntegerField(
+        "Stock", editable=True, blank=False, default=constants.STORE_STATUS_DEF_STOCK)
+    commodity_status_availability = models.BooleanField(
+        "Availability", editable=True, blank=False, default=constants.STORE_STATUS_DEF_AVAILABILITY)
+
+    def __str__(self):
+        return "%s %s (%s): RMB %.2f [%d Left]" % \
+               ("√" if self.commodity_status_availability else "×", self.commodity_info_title,
+                self.commodity_info_size, self.commodity_info_price, self.commodity_status_stock)
+
+    class Meta:
+        verbose_name_plural = "Store - Items"
