@@ -150,7 +150,8 @@ class Order(models.Model):
     seller_info = models.CharField("Seller Info",
                                    editable=False,
                                    blank=False,
-                                   default=constants.ORDER_SELLER_INFO_DEF)
+                                   default=constants.ORDER_SELLER_INFO_DEF,
+                                   max_length=constants.ORDER_INFO_MAX_LENGTH)
     pay_qr_code = models.TextField("QR Code URL for Payment",
                                    editable=False,
                                    blank=False,
@@ -164,7 +165,8 @@ class Order(models.Model):
     order_status = models.CharField("Current Order Status",
                                     editable=True,
                                     blank=False,
-                                    default=constants.ORDER_STATUS_DEF)
+                                    default=constants.ORDER_STATUS_DEF,
+                                    max_length=constants.ORDER_INFO_MAX_LENGTH)
 
     def __str__(self):
         return "order_id: {}, " \

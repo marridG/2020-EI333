@@ -38,6 +38,7 @@ STORE_STATUS_DEF_AVAILABILITY = True
 ORDER_SELLER_INFO_DEF = "SJTUTTA"
 ORDER_STATUS_DEF = "order_accepted"
 ORDER_PAY_QR_CODE_DEF = STORE_INFO_DEF_IMAGE  # TODO:to be replaced with a image of real QR code
+ORDER_INFO_MAX_LENGTH = 255
 
 # Redirection url if user authentication is failed
 AUTH_FAIL_REDIRECT = ""
