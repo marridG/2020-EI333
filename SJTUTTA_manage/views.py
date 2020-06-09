@@ -745,7 +745,7 @@ def show_profile(request):
     """
 
     _data = {"user_id": "",
-             "User Name": "",
+             "user_name": "",
              "user_phone": "",
              "user_SJTUID": "",
              "user_expire_date": "",
@@ -767,7 +767,7 @@ def show_profile(request):
         _data["RequestStatus"] = "CurrentUserNotExist"
     else:
         _data["user_id"] = queue_result.user_id
-        _data["User Name"] = queue_result.username
+        _data["user_name"] = queue_result.username
         _data["user_phone"] = queue_result.user_phone
         _data["user_SJTUID"] = queue_result.user_SJTUID
         _data["user_expire_date"] = queue_result.user_expire_date
