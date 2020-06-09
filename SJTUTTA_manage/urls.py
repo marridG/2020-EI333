@@ -13,9 +13,15 @@ urlpatterns = [
     path("app/store/items/new/", views.store_new_item),
     path("app/store/items/edit/", views.store_edit_item),
 
+    # [Profile]
     path("app/ViewProfile", views.show_profile),
     path("app/EditProfile", views.edit_profile),
+
+    # [login, logout & reg]
     path("app/login", views.my_login),
     path("app/registration", views.my_register),
-    path("app/logout", views.my_logout)
+    path("app/logout", views.my_logout),
+
+    # [Orders]
+    path("app/GetOrder", views.get_order),
 ]
