@@ -831,6 +831,73 @@ def edit_profile(request):
     return JsonResponse(_data)
 
 
+@csrf_exempt
+def get_order(request):
+    """
+        for a LOGGED_IN user:
+        handles the JSON request form "/SJTUTTA_manage/app/GetOrder" and return JSON data
+            NOT authenticated:      Return a notification in JSON
+            authenticated:          Handle request.body and return JSON
+        receives a dict of items and numbers, and returns the separated order number(s) and total price.
+        Try for more details about "return".
+        :param
+            request:
+                (.body)<json>
+                    {"buyer_email": <str>,
+                     "items": <dict>}
+                     (in which every k-v pair represents a commodity and its number)
+                     (e.g., {certain commodity_id: count})
+                     (frontend ensures that each kind of commodity has 0-32767 items(an integer))
+        :return:
+            <json>
+                {"total_price": <float>,
+                 "order_id": <list>,
+                 "RequestStatus": <str>}
+                (order_id is a list of orders, arranged by the sequence of those in the "items" dict;
+                each kind of commodity generates an order.)
+                (possible values for RequestStatus:
+                    "NotAuthenticated",
+                    "SomeCommodityNotExist"
+                    "OK")
+    """
+
+    _data = {"total_price": 0.,
+             "order_id": [],
+             "RequestStatus": ""}
+
+    if not request.user.is_authenticated:
+        _data["RequestStatus"] = "NotAuthenticated"
+        return JsonResponse(_data)
+
+    received_data = read_request(request, "access the dict of commodities")
+    buyer_email = received_data.get("buyer_email")
+    commodity_dict = received_data.get("items")
+
+    for (k, v) in commodity_dict.items():
+        # todo: add seller info in models.StoreItems
+        try:
+            commodity = StoreItems.objects.get(commodity_id=k)
+        except django.core.exceptions.ValidationError and StoreItems.DoesNotExist:
+            _data["total_price"] = 0.
+            _data["order_id"] = [],
+            _data["RequestStatus"] = "SomeCommodityNotExist"
+            return JsonResponse(_data)
+        if not commodity:
+            _data["total_price"] = 0.
+            _data["order_id"] = [],
+            _data["RequestStatus"] = "SomeCommodityNotExist"
+            return JsonResponse(_data)
+        order = Order.objects.create(commodity_id=k,
+                                     item_count=v,
+                                     total_price=v*commodity.commodity_info_price,
+                                     buyer_email=buyer_email)
+        _data["order_id"].append(order.order_id)
+        _data["total_price"] += order.total_price
+
+    _data["RequestStatus"] = "OK"
+    return JsonResponse(_data)
+
+
 # local time, as Beijing (CST, UTC+8)
 # bj_CST = timezone(timedelta(hours=8))
 # now = datetime.now().astimezone(bj_CST)
