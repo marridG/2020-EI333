@@ -61,5 +61,6 @@ admin.site.register(UserProfile, UserAdmin)
 admin.site.register(Activities)
 admin.site.register(ActivitiesRollCall)
 admin.site.register(StoreItems)
+admin.site.register(Order)
 
 admin.ModelAdmin.filter_horizontal = ('groups', 'user_permissions')
