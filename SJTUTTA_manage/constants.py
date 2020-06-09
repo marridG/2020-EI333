@@ -34,6 +34,11 @@ STORE_INFO_DEF_PRICE = 2.33
 STORE_STATUS_DEF_STOCK = 0
 STORE_STATUS_DEF_AVAILABILITY = True
 
+# order related
+ORDER_SELLER_INFO_DEF = "SJTUTTA"
+ORDER_STATUS_DEF = "order_accepted"
+ORDER_PAY_QR_CODE_DEF = STORE_INFO_DEF_IMAGE  # TODO:to be replaced with a image of real QR code
+
 # Redirection url if user authentication is failed
 AUTH_FAIL_REDIRECT = ""
 AUTH_LIM_SESSION_EXPIRY = 1000 * 60  # seconds
