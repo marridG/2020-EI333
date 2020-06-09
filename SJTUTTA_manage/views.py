@@ -843,8 +843,7 @@ def get_order(request):
         :param
             request:
                 (.body)<json>
-                    {"buyer_email": <str>,
-                     "items": <dict>}
+                    {"items": <dict>}
                      (in which every k-v pair represents a commodity and its number)
                      (e.g., {certain commodity_id: count})
                      (frontend ensures that each kind of commodity has 0-32767 items(an integer))
@@ -870,8 +869,11 @@ def get_order(request):
         return JsonResponse(_data)
 
     received_data = read_request(request, "access the dict of commodities")
-    buyer_email = received_data.get("buyer_email")
+    # buyer_email = received_data.get("buyer_email")
     commodity_dict = received_data.get("items")
+
+    user_id = request.user.user_id
+    buyer_email = UserProfile.objects.get(user_id=user_id)
 
     for (k, v) in commodity_dict.items():
         # todo: add seller info in models.StoreItems
