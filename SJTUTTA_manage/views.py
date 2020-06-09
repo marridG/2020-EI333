@@ -873,7 +873,7 @@ def get_order(request):
     commodity_dict = received_data.get("items")
 
     user_id = request.user.user_id
-    buyer_email = UserProfile.objects.get(user_id=user_id)
+    buyer_email = UserProfile.objects.get(user_id=user_id).email
 
     for (k, v) in commodity_dict.items():
         # todo: add seller info in models.StoreItems
