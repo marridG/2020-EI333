@@ -121,3 +121,70 @@ class StoreItems(models.Model):
 
     class Meta:
         verbose_name_plural = "Store - Items"
+
+
+class Order(models.Model):
+    # id
+    order_id = models.UUIDField(unique=True,
+                                default=uuid.uuid4,
+                                editable=False)
+    # info
+    commodity_id = models.CharField("Commodity ID",
+                                    editable=False,
+                                    blank=False,
+                                    max_length=32)
+    # PositiveSmallIntegerField: meets 0-32767 integer
+    item_count = models.PositiveSmallIntegerField("Count of Item",
+                                                  editable=False,
+                                                  blank=False)
+    total_price = models.FloatField("Total Price",
+                                    editable=False,
+                                    blank=False)
+    order_datetime = models.DateTimeField("Order Datetime",
+                                          editable=False,
+                                          blank=False,
+                                          default=now)
+    buyer_email = models.EmailField('Customer Email Address',
+                                    editable=False,
+                                    blank=False)
+    seller_info = models.CharField("Seller Info",
+                                   editable=False,
+                                   blank=False,
+                                   default=constants.ORDER_SELLER_INFO_DEF)
+    pay_qr_code = models.TextField("QR Code URL for Payment",
+                                   editable=False,
+                                   blank=False,
+                                   default=constants.STORE_INFO_DEF_IMAGE)
+    # possible order status:
+    # "order_accepted"
+    # "seller_shipped"
+    # "buyer_accepted"
+    # "refund_raised"
+    # "refund_completed"
+    order_status = models.CharField("Current Order Status",
+                                    editable=True,
+                                    blank=False,
+                                    default=constants.ORDER_STATUS_DEF)
+
+    def __str__(self):
+        return "order_id: {}, " \
+               "commodity_id: {}, " \
+               "item_count: {}, " \
+               "total_price: {}, "\
+               "order_datetime: {}, " \
+               "buyer_email: {}, " \
+               "seller_info: {}, " \
+               "pay_qr_code: {}, " \
+               "order_status: {}"\
+                .format(self.order_id,
+                        self.commodity_id,
+                        self.item_count,
+                        self.total_price,
+                        self.order_datetime,
+                        self.buyer_email,
+                        self.seller_info,
+                        self.pay_qr_code,
+                        self.order_status)
+
+    class Meta:
+        verbose_name_plural = "Order"
