@@ -21,6 +21,10 @@ class UserAdmin(admin.ModelAdmin):
                     'get_user_expire_date',
                     # 'get_password',
                     'get_email']
+    search_fields = ["email", "username", ]
+    list_display_links = ["get_email", "get_username", "get_user_id", ]
+    ordering = ["user_expire_date", ]
+    list_per_page = constants.ADMIN_MAX_PER_PAGE
 
     def get_user_id(self, obj):
         return obj.user_id
