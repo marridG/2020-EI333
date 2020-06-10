@@ -80,10 +80,39 @@ class StoreItemsAdmin(admin.ModelAdmin):
     list_per_page = constants.ADMIN_MAX_PER_PAGE
 
 
+class ActivitiesRollCallAdmin(admin.ModelAdmin):
+    list_display = ["get_date", "get_name", "get_title", "get_location", ]
+    list_filter = ["activity__activity_start_time", "activity__activity_location", ]
+    search_fields = ["activity__activity_title", "activity__activity_location", ]
+    list_display_links = ["get_name", ]
+    list_per_page = constants.ADMIN_MAX_PER_PAGE
+
+    def get_date(self, obj):
+        return datetime.strftime(obj.activity.activity_start_time, "%Y/%m/%d %H:%M")
+
+    def get_location(self, obj):
+        return obj.activity.activity_location
+
+    def get_title(self, obj):
+        return obj.activity.activity_title
+
+    def get_name(self, obj):
+        return obj.participant.username
+
+    get_date.short_description = "Start Time"
+    get_date.admin_order_field = "activity__activity_start_time"
+    get_location.short_description = "Location"
+    get_location.admin_order_field = "activity__activity_location"
+    get_title.short_description = "Title"
+    get_title.admin_order_field = "activity__activity_title"
+    get_name.short_description = "Participant"
+    get_name.admin_order_field = "participant__username"
+
+
 admin.site.register(UserProfile, UserAdmin)
 # admin.site.register(Permission)
 admin.site.register(Activities)
-admin.site.register(ActivitiesRollCall)
+admin.site.register(ActivitiesRollCall, ActivitiesRollCallAdmin)
 admin.site.register(StoreItems, StoreItemsAdmin)
 admin.site.register(Order)
 
