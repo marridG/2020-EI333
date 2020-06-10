@@ -6,6 +6,9 @@ DEBUG_LISTACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude d
 DEBUG_ROLLCALLACTIVITY_INFO = DEBUG_MODE and True  # [roll call activity]: ex/include debug info in the returned JSON
 DEBUG_EDITITEM_INFO = DEBUG_MODE and True  # [edit commodity items]: ex/include debug info in the returned JSON
 
+# Admins Related: Limits(LIM), etc.
+ADMIN_MAX_PER_PAGE = 100
+
 # Activities Related: Defaults(DEF), Limits(LIM), etc.
 ACTIVITY_DEF_TITLE = "乒协活动 SJTUTTA"
 # [UNAVAILABLE] ACTIVITY_DEF_DURATION = timedelta(hours=1, minutes=30)  # total duration = hours : minutes

@@ -6,6 +6,8 @@ from django.contrib import admin
 # from django.contrib.auth.models import Permission
 from .models import *
 
+from . import constants
+
 
 # from django.contrib.auth.admin import UserAdmin
 
@@ -56,11 +58,33 @@ class UserAdmin(admin.ModelAdmin):
     get_email.short_description = "email"
 
 
+class StoreItemsAdmin(admin.ModelAdmin):
+    """
+    ["commodity_info_type", "commodity_info_title", "commodity_info_size",
+        "commodity_info_description", "commodity_info_image", "commodity_info_price",
+        "commodity_info_sold_by", "commodity_status_stock",
+        "commodity_status_availability"]
+    """  # All Fields
+
+    list_display = ["commodity_status_availability",
+                    "commodity_info_type", "commodity_info_title",
+                    "commodity_info_sold_by", "commodity_info_size",
+                    "commodity_info_price",
+                    "commodity_status_stock", ]
+    list_filter = ["commodity_status_availability", "commodity_info_type", "commodity_info_sold_by"]
+    search_fields = ["commodity_info_title", "commodity_info_sold_by", ]
+    list_display_links = ["commodity_info_title", "commodity_status_stock", ]
+    sortable_by = ["commodity_info_type", "commodity_info_title", "commodity_info_price",
+                   "commodity_info_sold_by", "commodity_status_stock",
+                   "commodity_status_availability"]
+    list_per_page = constants.ADMIN_MAX_PER_PAGE
+
+
 admin.site.register(UserProfile, UserAdmin)
 # admin.site.register(Permission)
 admin.site.register(Activities)
 admin.site.register(ActivitiesRollCall)
-admin.site.register(StoreItems)
+admin.site.register(StoreItems, StoreItemsAdmin)
 admin.site.register(Order)
 
-admin.ModelAdmin.filter_horizontal = ('groups', 'user_permissions')
+# admin.ModelAdmin.filter_horizontal = ('groups', 'user_permissions')
