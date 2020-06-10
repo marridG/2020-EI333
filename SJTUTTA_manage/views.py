@@ -883,7 +883,6 @@ def get_order(request):
     buyer_email = UserProfile.objects.get(user_id=user_id).email
 
     for (k, v) in commodity_dict.items():
-        # todo: add seller info in models.StoreItems
         try:
             commodity = StoreItems.objects.get(commodity_id=k)
         except django.core.exceptions.ValidationError and StoreItems.DoesNotExist:
@@ -899,7 +898,8 @@ def get_order(request):
         order = Order.objects.create(commodity_id=k,
                                      item_count=v,
                                      total_price=v * commodity.commodity_info_price,
-                                     buyer_email=buyer_email)
+                                     buyer_email=buyer_email,
+                                     seller_info=commodity.commodity_info_sold_by)
         _data["order_id"].append(order.order_id)
         _data["total_price"] += order.total_price
 
