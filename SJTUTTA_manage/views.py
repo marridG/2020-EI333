@@ -197,6 +197,7 @@ def form_commodity_info_dict(_item, show_id=False):
           "description": _item.commodity_info_description,
           "image": _item.commodity_info_image,
           "price": _item.commodity_info_price,
+          "sold by": _item.commodity_info_sold_by,
           "stock": _item.commodity_status_stock,
           "availability": _item.commodity_status_availability}
 
@@ -565,10 +566,11 @@ def rollcall_activity(request):
 def store_new_item(request):
     """
     :param request:
-        (.body)<json> {"Info": {"type": <str>/None, "title": <str>/None,
+        (.body)<json> {"Info": None/{"type": <str>/None, "title": <str>/None,
                                 "size": <str>/None, "description": <str>/None,
-                                "image": <str>/None, "price": <str, as float>/None}
-                        "Status": {"stock": <str, as int>/None,
+                                "image": <str>/None, "price": <str, as float>/None,
+                                "sold by": <str>/None}
+                        "Status": None/{"stock": <str, as int>/None,
                                     "availability": <str, as bool: True/False>/None}}
             * should include sessionid in Cookies to authenticate user/admin
             * "Info", "Status" and sub-keys must be given, although they may map to ""(None) values
@@ -594,6 +596,7 @@ def store_new_item(request):
                      "commodity_info_description": info.get("description"),
                      "commodity_info_image": info.get("image"),
                      "commodity_info_price": info.get("price"),
+                     "commodity_info_sold_by": info.get("sold_by"),
                      "commodity_status_stock": status.get("stock"),
                      "commodity_status_availability": status.get("availability")}
         # delete empty key-value
@@ -616,16 +619,17 @@ def store_edit_item(request):
         1. Query items          ==returned==>       Select items
         2. Submit Item Edits
     :param request:
-         (.body)<json> {"Items Query": None/<dict>
-                             {"type": <str>/None, "title": <str>/None,
-                                 "availability": <str, as bool: True/False>/None},
-                         "Edits": None/<dict>
+         (.body)<json>  {"Items Query": <dict>
+                             {"type": <str>/None, "title": <str>/None, "sold by": <str>/None
+                                 "availability": <str, as bool: True/False>/None}}
+                        OR
+                        {"Edits": <dict>
                              {"Edits Count": <int>,
                                  "Edits": <list> of <dict>
                                      {"id": <str>commodity id,
                                          "type": <str>/None, "description": <str>/None,
                                          "image": <str>/None, "stock": <str, as int>/None,
-                                         "availability": <str, as bool: True/False>/None}}
+                                         "availability": <str, as bool: True/False>/None}}}
             * should include sessionid in Cookies to authenticate user/admin
             * EXACTLY one of "Items_Qeury"/"Edits" should be included
             * all sub-keys of the given key ("I_Q"/"E") must be included,
@@ -669,11 +673,14 @@ def store_edit_item(request):
         in_dt = eval(str(received_data.get("Items Query")))
         in_type = in_dt.get("type")
         in_title = in_dt.get("title")
+        in_sold_by = in_dt.get("sold by")
         in_availability = in_dt.get("availability")
         if in_type:
             res_query_obj = res_query_obj.filter(commodity_info_type__icontains=in_type)
         if in_title:
             res_query_obj = res_query_obj.filter(commodity_info_title__icontains=in_title)
+        if in_sold_by:
+            res_query_obj = res_query_obj.filter(commodity_info_sold_by__icontains=in_sold_by)
         if in_availability:
             res_query_obj = res_query_obj.filter(commodity_status_availability=in_availability)
 
@@ -891,7 +898,7 @@ def get_order(request):
             return JsonResponse(_data)
         order = Order.objects.create(commodity_id=k,
                                      item_count=v,
-                                     total_price=v*commodity.commodity_info_price,
+                                     total_price=v * commodity.commodity_info_price,
                                      buyer_email=buyer_email)
         _data["order_id"].append(order.order_id)
         _data["total_price"] += order.total_price

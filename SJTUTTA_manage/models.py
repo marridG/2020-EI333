@@ -108,6 +108,9 @@ class StoreItems(models.Model):
                                             default=constants.STORE_INFO_DEF_IMAGE)
     commodity_info_price = models.FloatField("Price", editable=False, blank=False,
                                              default=constants.STORE_INFO_DEF_PRICE)
+    commodity_info_sold_by = models.CharField("Sold By", editable=False, blank=False,
+                                              max_length=constants.STORE_INFO_LIM_SOLD_BY_MAX_LENGTH,
+                                              default=constants.STORE_INFO_DEF_SOLD_BY)
     # status
     commodity_status_stock = models.PositiveIntegerField(
         "Stock", editable=True, blank=False, default=constants.STORE_STATUS_DEF_STOCK)
@@ -115,9 +118,12 @@ class StoreItems(models.Model):
         "Availability", editable=True, blank=False, default=constants.STORE_STATUS_DEF_AVAILABILITY)
 
     def __str__(self):
-        return "%s %s (%s): RMB %.2f [%d Left]" % \
-               ("√" if self.commodity_status_availability else "×", self.commodity_info_title,
-                self.commodity_info_size, self.commodity_info_price, self.commodity_status_stock)
+        return "%s " \
+               "[%s] %s (%s): RMB %.2f [%d Left]" % \
+               ("√" if self.commodity_status_availability else "×",
+                self.commodity_info_sold_by, self.commodity_info_title, self.commodity_info_size,
+                self.commodity_info_price,
+                self.commodity_status_stock)
 
     class Meta:
         verbose_name_plural = "Store - Items"
@@ -172,21 +178,21 @@ class Order(models.Model):
         return "order_id: {}, " \
                "commodity_id: {}, " \
                "item_count: {}, " \
-               "total_price: {}, "\
+               "total_price: {}, " \
                "order_datetime: {}, " \
                "buyer_email: {}, " \
                "seller_info: {}, " \
                "pay_qr_code: {}, " \
-               "order_status: {}"\
-                .format(self.order_id,
-                        self.commodity_id,
-                        self.item_count,
-                        self.total_price,
-                        self.order_datetime,
-                        self.buyer_email,
-                        self.seller_info,
-                        self.pay_qr_code,
-                        self.order_status)
+               "order_status: {}" \
+            .format(self.order_id,
+                    self.commodity_id,
+                    self.item_count,
+                    self.total_price,
+                    self.order_datetime,
+                    self.buyer_email,
+                    self.seller_info,
+                    self.pay_qr_code,
+                    self.order_status)
 
     class Meta:
         verbose_name_plural = "Order"
