@@ -27,14 +27,21 @@ def my_login(request):
                  "password": <str>}
     :return:
         <json>
-            {"login_status": <str>}
-            (possible values:
-            "membership_expired"
-            "email_not_found",
-            "password_wrong",
-            "successful")
+            {"login_status": <str>,
+             "membership": <str>}
+            (possible values for login_status:
+                "membership_expired"
+                "email_not_found",
+                "password_wrong",
+                "successful")
+            (possible values for membership:
+                "not_login",
+                "ordinary",
+                "secondary",
+                "super")
     """
-    return_data = {"login_status": ""}
+    return_data = {"login_status": "",
+                   "membership": ""}
 
     received_data = read_request(request, "log in")
     email = received_data['email']
@@ -46,12 +53,14 @@ def my_login(request):
     # MultipleObjectsReturned Not handled
     except django.core.exceptions.ObjectDoesNotExist as e:
         return_data["login_status"] = "email_not_found"
+        return_data["membership"] = "not_login"
         return JsonResponse(return_data)
 
     user = authenticate(request, username=username, password=password)
     if user is not None:
         if user.user_expire_date < date.today():
             return_data["login_status"] = "membership_expired"
+            return_data["membership"] = "not_login"
             return JsonResponse(return_data)
         # Notice str() is required since <byte>UUID is unsupported in json.dumps
         request.session["user_id"] = str(user.user_id)
@@ -59,8 +68,17 @@ def my_login(request):
         request.session.modified = True
         login(request, user)
         return_data["login_status"] = "successful"
+        if 'SJTUTTA_manage.add_activitiesrollcall' and \
+           'SJTUTTA_manage.view_activitiesrollcall' in user.get_all_permissions():
+            if 'SJTUTTA_manage.add_storeitems' not in user.get_all_permissions():
+                return_data["membership"] = "secondary"
+            else:
+                return_data["membership"] = "super"
+        else:
+            return_data["membership"] = "ordinary"
     else:
         return_data["login_status"] = "password_wrong"
+        return_data["membership"] = "not_login"
 
     return JsonResponse(return_data)
 
