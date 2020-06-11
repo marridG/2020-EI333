@@ -26,6 +26,8 @@ class UserAdmin(admin.ModelAdmin):
     ordering = ["user_expire_date", ]
     list_per_page = constants.ADMIN_MAX_PER_PAGE
 
+    filter_horizontal = ('groups', 'user_permissions')
+
     def get_user_id(self, obj):
         return obj.user_id
 
@@ -136,4 +138,4 @@ admin.site.register(ActivitiesRollCall, ActivitiesRollCallAdmin)
 admin.site.register(StoreItems, StoreItemsAdmin)
 admin.site.register(Order)
 
-# admin.ModelAdmin.filter_horizontal = ('groups', 'user_permissions')
+
