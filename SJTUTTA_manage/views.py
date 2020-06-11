@@ -287,6 +287,33 @@ def activities_list_all(request):
 
 
 @csrf_exempt
+def activities_list_participants(request):
+    """
+    :param request:
+        (.body)<json> {"Activity": <str>activity_id}
+            * should include sessionid in Cookies to authenticate user/admin
+    :return:  (.body)<json>   {"Participants Count": <int>, "Participants":[]}
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif not request.user.has_perm("SJTUTTA_manage.view_activitiesrollcall"):
+        return JsonResponse({"ERROR": "Attempting to Access Activities Roll Call"
+                                      " without Corresponding Privileges."})
+
+    try:
+        received_data = read_request(request, "list participants of an activity")
+        act_id = received_data.get("Activity")
+        act_logs = ActivitiesRollCall.objects.filter(activity__activity_id=act_id)
+    except TypeError as e:
+        raise RuntimeError("Invalid Request: %s" % e)
+
+    data = {"Participants Count": act_logs.count(),
+            "Participants": [_lg.participant.user_id for _lg in act_logs]}
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
 def activities_new_activity(request):
     """
     :param request:
