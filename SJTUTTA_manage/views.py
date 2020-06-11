@@ -508,7 +508,7 @@ def rollcall_activity(request):
                        "attributes of 'time'(start&end) follows 'time.struct_time'"
                    ]},
                    {"User": ["selected user"]},
-                   {"Failed": "None/<str> Successfully add the roll call log / Error Message"}],
+                   {"Failed": "None/<str>: Successfully add the roll call log / Error Message"}],
         "Request": received_data}
     _data = {
         "Activities": [],  # emptied after selection
@@ -517,7 +517,8 @@ def rollcall_activity(request):
         "Users Count": 0,  # emptied after selection
         "Activity": None,  # empty before selection
         "User": None,  # empty before selection
-        "Failed": "Not logged yet"  # value is None iff successfully roll called
+        "Failed": "Not logged yet"  # value is (1)None iff success;
+        # (2)"Expired Participant"; (3)Duplicate Roll Call; (4)Error Messages
     }
     if constants.DEBUG_ROLLCALLACTIVITY_INFO:
         data = {**_data_info, **_data}
@@ -599,16 +600,24 @@ def rollcall_activity(request):
             # print(in_act_id)
             act_obj = Activities.objects.get(activity_id=in_act_id)
             user_obj = UserProfile.objects.get(user_id=in_user_id)
+        except Exception as err:
+            data["Failed"] = "Failed at Submit: %s" % (str(err))
+            return JsonResponse(data)
 
-            if user_obj.user_expire_date>=now:
-                data["Failed"] = "Expired Participant"
-            else:
-                if ActivitiesRollCall.objects.get(activity__activity_id=in_act_id,
-                                                  participant__user_id=in_user_id):
-                    data["Failed"] = "Duplicate Roll Call"
-                else:
-                    ActivitiesRollCall.objects.create(activity=act_obj, participant=user_obj)
-                    data["Failed"] = None
+        if user_obj.user_expire_date <= now.date():  # expired user
+            data["Failed"] = "Expired Participant"
+            return JsonResponse(data)
+
+        if ActivitiesRollCall.objects. \
+                filter(activity__activity_id=in_act_id,
+                       participant__user_id=in_user_id).exists():
+            data["Failed"] = "Duplicate Roll Call"
+            return JsonResponse(data)
+
+        try:
+            ActivitiesRollCall.objects.create(activity=act_obj,
+                                              participant=user_obj)
+            data["Failed"] = None
         except Exception as err:
             data["Failed"] = "Failed at Submit: %s" % (str(err))
 
