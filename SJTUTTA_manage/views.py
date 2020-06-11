@@ -563,6 +563,39 @@ def rollcall_activity(request):
 
 
 @csrf_exempt
+def store_list_items(request):
+    """
+    :param request:
+        (.body)<json> None / {"Page Limit": <str, as int>, "Page": <str, as int>}
+            * should include sessionid in Cookies to authenticate user/admin
+            * Page Number starts from 1
+    :return:  (.body)<json>   {"Items Count": <int>, "Items":[]}
+                        if None: All items, if with arguments: filtered
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+
+    items = StoreItems.objects.all()
+
+    if request.body:
+        try:
+            received_data = read_request(request, "list commodities")
+            page_lim = int(received_data.get("Page Limit"))
+            page = int(received_data.get("Page"))
+
+            lb = (page - 1) * page_lim
+            ub = page * page_lim - 1
+            items = items[lb:ub + 1]
+        except TypeError as e:
+            raise RuntimeError("Invalid Request: %s" % e)
+
+    data = {"Items Count": items.count(),
+            "Items": [form_commodity_info_dict(_itm, show_id=True) for _itm in items]}
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
 def store_new_item(request):
     """
     :param request:
