@@ -514,7 +514,7 @@ def rollcall_activity(request):
         "Users Count": 0,  # emptied after selection
         "Activity": None,  # empty before selection
         "User": None,  # empty before selection
-        "Failed": "Not logged yet"  # value is (1)None iff success;
+        "Failed": "Not logged yet"  # when value is not default: (1)None iff success;
         # (2)"Expired Participant"; (3)Duplicate Roll Call; (4)Error Messages
     }
     if constants.DEBUG_ROLLCALLACTIVITY_INFO:
