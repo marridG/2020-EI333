@@ -437,12 +437,9 @@ def rollcall_asst_validate_request(data):
 
     # [Deleted] Select User
     elif data.get("User_Selected"):
-        for _f in ["User_Query", "Activity_Query"]:  # extra args
+        for _f in ["User_Query", "Activity_Query", "Activity_Selected"]:  # extra args
             if data.get(_f):
                 raise RuntimeError("Extra \"%s\" given when querying Activity" % _f)
-
-        if not data.get("Activity_Selected"):
-            raise RuntimeError("Missing \"Activity_Selected\" when selecting activity")
 
         return True, 4
 
@@ -585,11 +582,12 @@ def rollcall_activity(request):
 
     # Select User
     elif 4 == op_id:
-        in_id = received_data.get("User_Selected")
-        _act = UserProfile.objects.get(user_id=in_id)
-        data["User"] = form_user_info_dict(_user=_act, show_id=False)
-
-        return JsonResponse(data)
+        return JsonResponse({"Select User": "Disabled Functionality"})
+        # in_id = received_data.get("User_Selected")
+        # _act = UserProfile.objects.get(user_id=in_id)
+        # data["User"] = form_user_info_dict(_user=_act, show_id=False)
+        #
+        # return JsonResponse(data)
 
     # Submit
     else:  # 5 == op_id:
