@@ -435,7 +435,7 @@ def rollcall_asst_validate_request(data):
 
         return True, 3
 
-    # Select User
+    # [Deleted] Select User
     elif data.get("User_Selected"):
         for _f in ["User_Query", "Activity_Query"]:  # extra args
             if data.get(_f):
@@ -474,7 +474,7 @@ def rollcall_activity(request):
                                     "User_Query": {"name": <str>/None, "tele": <str/int>/None,
                                             "email": <str>/None, "sjtu_id": <str/int>/None },
                                     "Activity_Selected": <str>activity_id/None,
-                                    "User_Selected": <str>user_id/None,
+                                    # [Deleted] "User_Selected": <str>user_id/None,
                                     "Submit": None/{"activity_id": <str>, "user_id": <str>} }
                     * should include sessionid in Cookies to authenticate user/admin
                     * >=1 sub-args must be given
@@ -517,7 +517,7 @@ def rollcall_activity(request):
         "Users Count": 0,  # emptied after selection
         "Activity": None,  # empty before selection
         "User": None,  # empty before selection
-        "Failed": "Not logged yet"  # True iff successfully roll called
+        "Failed": "Not logged yet"  # value is None iff successfully roll called
     }
     if constants.DEBUG_ROLLCALLACTIVITY_INFO:
         data = {**_data_info, **_data}
@@ -599,8 +599,12 @@ def rollcall_activity(request):
             # print(in_act_id)
             act_obj = Activities.objects.get(activity_id=in_act_id)
             user_obj = UserProfile.objects.get(user_id=in_user_id)
-            ActivitiesRollCall.objects.create(activity=act_obj, participant=user_obj)
-            data["Failed"] = None
+            if ActivitiesRollCall.objects.get(activity__activity_id=in_act_id,
+                                              participant__user_id=in_user_id):
+                data["Failed"]="Duplicate Roll Call"
+            else:
+                ActivitiesRollCall.objects.create(activity=act_obj, participant=user_obj)
+                data["Failed"] = None
         except Exception as err:
             data["Failed"] = "Failed at Submit: %s" % (str(err))
 
