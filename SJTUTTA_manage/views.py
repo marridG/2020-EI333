@@ -69,7 +69,7 @@ def my_login(request):
         login(request, user)
         return_data["login_status"] = "successful"
         if 'SJTUTTA_manage.add_activitiesrollcall' and \
-           'SJTUTTA_manage.view_activitiesrollcall' in user.get_all_permissions():
+                'SJTUTTA_manage.view_activitiesrollcall' in user.get_all_permissions():
             if 'SJTUTTA_manage.add_storeitems' not in user.get_all_permissions():
                 return_data["membership"] = "secondary"
             else:
@@ -599,12 +599,16 @@ def rollcall_activity(request):
             # print(in_act_id)
             act_obj = Activities.objects.get(activity_id=in_act_id)
             user_obj = UserProfile.objects.get(user_id=in_user_id)
-            if ActivitiesRollCall.objects.get(activity__activity_id=in_act_id,
-                                              participant__user_id=in_user_id):
-                data["Failed"]="Duplicate Roll Call"
+
+            if user_obj.user_expire_date>=now:
+                data["Failed"] = "Expired Participant"
             else:
-                ActivitiesRollCall.objects.create(activity=act_obj, participant=user_obj)
-                data["Failed"] = None
+                if ActivitiesRollCall.objects.get(activity__activity_id=in_act_id,
+                                                  participant__user_id=in_user_id):
+                    data["Failed"] = "Duplicate Roll Call"
+                else:
+                    ActivitiesRollCall.objects.create(activity=act_obj, participant=user_obj)
+                    data["Failed"] = None
         except Exception as err:
             data["Failed"] = "Failed at Submit: %s" % (str(err))
 
