@@ -20,6 +20,7 @@ urlpatterns = [
     path("app/EditProfile", views.edit_profile),
 
     path("user/expiration/extend/", views.user_extend_expiration),  # test
+    path("user/all/view/", views.user_show_info_batch),  # test
 
     # [login, logout & reg]
     path("app/login", views.my_login),

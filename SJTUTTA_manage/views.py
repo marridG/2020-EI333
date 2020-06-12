@@ -830,26 +830,20 @@ def user_show_info_batch(request):
     """
     :param request:
          (.body)<json>  {"Count": <int>,
-                            "Users": <list>of<dict> [
-                                {"user id": <str>user id, "delta": <str, as int, in days>}]
+                            "Users": <list>of<str>, where <str> is user id
             * should include sessionid in Cookies to authenticate user/admin
-            * especially, if the delta is floating num, it'll be truncated in int()
     :return:
-         (.body)<json>  {"Success": list of <dict>{<str>user id: <dict>{
-                                                        "from": <str, as date>prev expiration,
-                                                        "to": <str, as date>prev expiration,
-                                                        "by": <str, as int>deltain days} },
-                                                            # date in format "%Y-%m-%d"
-                        "Failed":  list of <dict>{"Unknown Error" / <str>user id:
-                                                    <str>error message} }
+         (.body)<json>  {"Success": list of <dict>{<str>user id:
+                                                    <dict>user info dict without user id},
+                        "Failed":  list of <dict>{<str>user id: <str>error message} }
     """
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
-    elif not request.user.has_perm("SJTUTTA_manage.change_userprofile"):
-        return JsonResponse({"ERROR": "Attempting to Edit Expiration"
+    elif not request.user.has_perm("SJTUTTA_manage.view_userprofile"):
+        return JsonResponse({"ERROR": "Attempting to View Users"
                                       " without Corresponding Privileges."})
 
-    received_data = read_request(request, "edit expiration")
+    received_data = read_request(request, "view users")
 
     try:
         user_cnt = int(received_data.get("Count"))
@@ -861,30 +855,14 @@ def user_show_info_batch(request):
         raise RuntimeError("Invalid Request Data: Count Does not Match")
 
     data = {"Success": [], "Failed": []}
-    for edit in target_users:
-        try:
-            user_id = edit.get("user id")
-            delta = int(edit.get("delta"))
-            if not UserProfile.objects.filter(user_id=user_id).exists():
-                data["Failed"].append({user_id: "Invalid User ID"})
-                continue
-            if delta <= 0:
-                data["Failed"].append({user_id: "Invalid <=0 Delta"})
-                continue
+    for user_id in target_users:
+        if not UserProfile.objects.filter(user_id=user_id).exists():
+            data["Failed"].append({user_id: "Invalid User ID"})
+            continue
 
-            target_obj = UserProfile.objects.get(user_id=user_id)
-            time_delta = timedelta(days=delta)
-            prev_expiration = target_obj.user_expire_date
-            new_expiration = prev_expiration + time_delta
-            target_obj.user_expire_date = new_expiration
-            target_obj.save()
-            data["Success"].append({
-                user_id: {"from": datetime.strftime(prev_expiration, "%Y-%m-%d"),
-                          "to": datetime.strftime(new_expiration, "%Y-%m-%d"),
-                          "by": delta}})
+        target_obj = UserProfile.objects.get(user_id=user_id)
+        data["Success"].append({user_id: form_user_info_dict(_user=target_obj, show_id=False)})
 
-        except Exception as e:
-            data["Failed"].append({"Unknown Error": str(e)})
 
     return JsonResponse(data)
 
