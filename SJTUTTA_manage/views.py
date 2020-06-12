@@ -310,7 +310,7 @@ def activities_list_participants(request):
     :param request:
         (.body)<json> {"Activity": <str>activity_id}
             * should include sessionid in Cookies to authenticate user/admin
-    :return:  (.body)<json>   {"Participants Count": <int>, "Participants":[]}
+    :return:  (.body)<json>   {"Participants Count": <int>, "Participants":[<dict>user info]}
     """
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
@@ -326,7 +326,8 @@ def activities_list_participants(request):
         raise RuntimeError("Invalid Request: %s" % e)
 
     data = {"Participants Count": act_logs.count(),
-            "Participants": [_lg.participant.user_id for _lg in act_logs]}
+            "Participants": [form_user_info_dict(UserProfile.objects.get(user_id=_lg.participant.user_id))
+                             for _lg in act_logs]}
 
     return JsonResponse(data)
 
