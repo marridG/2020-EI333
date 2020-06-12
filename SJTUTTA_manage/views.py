@@ -346,6 +346,8 @@ def activities_new_activity(request):
             * Notice that value/type validation is not conducted in backend
     :return:
         (.body)<json>   if Success: {"Success": Created Activity ID} else a raised error
+                        if Failed: {"Error": <str>message})
+                                e.g. "Invalid Request: Start Time Later than End Time"
     """
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
