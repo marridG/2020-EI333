@@ -19,6 +19,8 @@ urlpatterns = [
     path("app/ViewProfile", views.show_profile),
     path("app/EditProfile", views.edit_profile),
 
+    path("user/expiration/extend/", views.user_extend_expiration),  # test
+
     # [login, logout & reg]
     path("app/login", views.my_login),
     path("app/registration", views.my_register),

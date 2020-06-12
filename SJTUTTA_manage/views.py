@@ -824,6 +824,70 @@ def store_edit_item(request):
 
 
 @csrf_exempt
+def user_extend_expiration(request):
+    """
+    :param request:
+         (.body)<json>  {"Count": <int>,
+                            "Users": <list>of<dict> [
+                                {"user id": <str>user id, "delta": <str, as int, in days>}]
+            * should include sessionid in Cookies to authenticate user/admin
+            * especially, if the delta is floating num, it'll be truncated in int()
+    :return:
+         (.body)<json>  {"Success": list of <dict>{<str>user id: <dict>{
+                                                        "from": <str, as date>prev expiration,
+                                                        "to": <str, as date>prev expiration,
+                                                        "by": <str, as int>deltain days} },
+                                                            # date in format "%Y-%m-%d"
+                        "Failed":  list of <dict>{"Unknown Error" / <str>user id:
+                                                    <str>error message} }
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif not request.user.has_perm("SJTUTTA_manage.change_userprofile"):
+        return JsonResponse({"ERROR": "Attempting to Edit Expiration"
+                                      " without Corresponding Privileges."})
+
+    received_data = read_request(request, "edit expiration")
+
+    try:
+        user_cnt = int(received_data.get("Count"))
+        target_users = eval(str(received_data.get("Users")))
+    except Exception as e:
+        raise RuntimeError("Invalid Request: %s" % e)
+
+    if user_cnt != len(target_users):
+        raise RuntimeError("Invalid Request Data: Count Does not Match")
+
+    data = {"Success": [], "Failed": []}
+    for edit in target_users:
+        try:
+            user_id = edit.get("user id")
+            delta = int(edit.get("delta"))
+            if not UserProfile.objects.filter(user_id=user_id).exists():
+                data["Failed"].append({user_id: "Invalid User ID"})
+                continue
+            if delta <= 0:
+                data["Failed"].append({user_id: "Invalid <=0 Delta"})
+                continue
+
+            target_obj = UserProfile.objects.get(user_id=user_id)
+            time_delta = timedelta(days=delta)
+            prev_expiration = target_obj.user_expire_date
+            new_expiration = prev_expiration + time_delta
+            target_obj.user_expire_date = new_expiration
+            target_obj.save()
+            data["Success"].append({
+                user_id: {"from": datetime.strftime(prev_expiration, "%Y-%m-%d"),
+                          "to": datetime.strftime(new_expiration, "%Y-%m-%d"),
+                          "by": delta}})
+
+        except Exception as e:
+            data["Failed"].append({"Unknown Error": str(e)})
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
 def show_profile(request):
     """
     for a LOGGED_IN user:
