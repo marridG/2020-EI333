@@ -23,7 +23,8 @@ class UserAdmin(admin.ModelAdmin):
                     'get_email']
     search_fields = ["email", "username", ]
     list_display_links = ["get_email", "get_username", "get_user_id", ]
-    ordering = ["user_expire_date", ]
+    list_filter = ['user_expire_date', ]
+    ordering = ["user_expire_date", 'user_SJTUID', ]
     list_per_page = constants.ADMIN_MAX_PER_PAGE
 
     filter_horizontal = ('groups', 'user_permissions')
@@ -62,6 +63,10 @@ class UserAdmin(admin.ModelAdmin):
         return obj.email
 
     get_email.short_description = "email"
+
+
+class OrderAdmin(admin.ModelAdmin):
+    list_filter = ["order_status", ]
 
 
 class StoreItemsAdmin(admin.ModelAdmin):
@@ -136,6 +141,6 @@ admin.site.register(UserProfile, UserAdmin)
 admin.site.register(Activities, ActivitiesAdmin)
 admin.site.register(ActivitiesRollCall, ActivitiesRollCallAdmin)
 admin.site.register(StoreItems, StoreItemsAdmin)
-admin.site.register(Order)
+admin.site.register(Order, OrderAdmin)
 
 
