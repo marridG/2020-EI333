@@ -356,10 +356,14 @@ def activities_new_activity(request):
     try:
         received_data = read_request(request, "add new activities")
 
-        in_kwargs = {"activity_start_time":
-                         tz.localize(datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M")),
-                     "activity_end_time":
-                         tz.localize(datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M"))}
+        in_start_time = tz.localize(datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M"))
+        in_end_time = tz.localize(datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M"))
+
+        if in_start_time >= in_end_time:
+            return JsonResponse({"Error": "Invalid Request: Start Time Later than End Time"})
+
+        in_kwargs = {"activity_start_time": in_start_time,
+                     "activity_end_time": in_end_time}
         if received_data.get("description"):
             in_kwargs["activity_description"] = received_data.get("description")
         else:  # allow descriptions to be left blank
