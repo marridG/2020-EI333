@@ -289,7 +289,7 @@ def activities_list_all(request):
     for _act in activities_lst:
         _attended = ActivitiesRollCall.objects.filter(
             activity__activity_id=_act.activity_id, participant__user_id=user_id).exists()
-        _d = form_activity_info_dict(_act=_act, show_id=False)
+        _d = form_activity_info_dict(_act=_act, show_id=True)
 
         if _act.activity_end_time < now:  # attended
             if _attended:
