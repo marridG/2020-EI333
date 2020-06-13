@@ -749,7 +749,7 @@ def store_new_item(request):
         (.body)<json> {"Info": None/{"type": <str>/None, "title": <str>/None,
                                 "size": <str>/None, "description": <str>/None,
                                 "image": <str>/None, "price": <str, as float>/None,
-                                "sold by": <str>/None}
+                                "sold_by": <str>/None}
                         "Status": None/{"stock": <str, as int>/None,
                                     "availability": <str, as bool: True/False>/None}}
             * should include sessionid in Cookies to authenticate user/admin
