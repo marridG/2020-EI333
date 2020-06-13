@@ -876,8 +876,7 @@ def store_edit_item(request):
     """
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
-    elif (not request.user.has_perm("SJTUTTA_manage.view_storeitems")) or \
-            (not request.user.has_perm("SJTUTTA_manage.change_storeitems")):
+    elif not request.user.has_perm("SJTUTTA_manage.change_storeitems"):
         return JsonResponse({"ERROR": "Attempting to Edit Commodities Info"
                                       " without Corresponding Privileges."})
 
