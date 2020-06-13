@@ -2,9 +2,12 @@ from datetime import timedelta
 
 # for Debugs
 DEBUG_MODE = True  # global switch
-DEBUG_LISTACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude debug info in the returned JSON
+DEBUG_LISTUSERACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude debug info in the returned JSON
+DEBUG_LISTALLACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude debug info in the returned JSON
 DEBUG_ROLLCALLACTIVITY_INFO = DEBUG_MODE and True  # [roll call activity]: ex/include debug info in the returned JSON
+DEBUG_SEARCHACTIVITY_INFO = DEBUG_MODE and True  # [list activities] in/ex-clude debug info in the returned JSON
 DEBUG_EDITITEM_INFO = DEBUG_MODE and True  # [edit commodity items]: ex/include debug info in the returned JSON
+DEBUG_SEARCHITEM_INFO = DEBUG_MODE and True  # [edit commodity items]: ex/include debug info in the returned JSON
 
 # Admins Related: Limits(LIM), etc.
 ADMIN_MAX_PER_PAGE = 100

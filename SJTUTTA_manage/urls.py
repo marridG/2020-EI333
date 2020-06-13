@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     # [Activities]
     path("app/activities/user/", views.activities_list_user_related_activities),
+    path("app/activities/search/", views.activities_search_activity),
     path("app/activities/all/", views.activities_list_all_activities),
     path("app/activities/new/", views.activities_new_activity),
     path("app/activities/rollcall/", views.rollcall_activity),

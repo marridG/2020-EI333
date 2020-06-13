@@ -226,6 +226,56 @@ def form_commodity_info_dict(_item, show_id=False):
 
 
 @csrf_exempt
+def activities_search_activity(request):
+    """
+    :param request: (.body)<json> {"title": <str>/None, "location": <str>/None,
+                                        "date": None/<str, as datetime %Y-%m-%d> }
+                * should include sessionid in Cookies to authenticate user/admin
+    :return:
+    """
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+
+    received_data = read_request(request, "search activities")
+
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_SEARCHACTIVITY_INFO
+    _data_info = {
+        "Fields": [{"Fields": "DEBUG"}, {"Request": "DEBUG"},
+                   {"Activities": [
+                       "queried activities",
+                       "order by start_time, the earlier in the given day, the more in the front",
+                       "attributes of 'time'(start&end) follows 'time.struct_time'"
+                   ]}],
+        "Request": received_data}
+    _data = {"Activities Count": 0, "Activities": []}
+    if constants.DEBUG_SEARCHACTIVITY_INFO:
+        data = {**_data_info, **_data}
+    else:
+        data = _data
+
+    res_query_obj = Activities.objects.order_by("activity_start_time")
+    in_dt = eval(str(received_data))
+    in_title = in_dt.get("title")
+    in_date = in_dt.get("date")  # <str>
+    in_loc = in_dt.get("location")
+    if in_title:
+        res_query_obj = res_query_obj.filter(activity_title__icontains=in_title)
+    if in_date:
+        in_date_obj = datetime.strptime(in_date, "%Y-%m-%d")
+        res_query_obj = res_query_obj.filter(activity_start_time__date=in_date_obj)
+    if in_loc:
+        res_query_obj = res_query_obj.filter(activity_location__icontains=in_loc)
+
+    for _act in res_query_obj:
+        _d = form_activity_info_dict(_act=_act, show_id=True)
+        data["Activities"].append(_d)
+        data["Activities Count"] += 1
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
 def activities_list_user_related_activities(request):
     """
     for a LOGGED_IN user:
@@ -248,7 +298,7 @@ def activities_list_user_related_activities(request):
 
     user_id = request.user.user_id
 
-    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTACTIVITY_INFO
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTUSERACTIVITY_INFO
     _data_info = {
         "Fields": [
             {"Fields": "DEBUG"}, {"Request User ID": "DEBUG"},
@@ -282,7 +332,7 @@ def activities_list_user_related_activities(request):
         "Upcoming Activities Count": 0,
         "Upcoming Activities": []
     }
-    if constants.DEBUG_LISTACTIVITY_INFO:
+    if constants.DEBUG_LISTUSERACTIVITY_INFO:
         data = {**_data_info, **_data}
     else:
         data = _data
@@ -328,7 +378,7 @@ def activities_list_all_activities(request):
         return JsonResponse({"ERROR": "You are attempting to access activities list "
                                       " without corresponding privileges."})
 
-    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTACTIVITY_INFO
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTALLACTIVITY_INFO
     _data_info = {
         "Fields": [
             {"Fields": "DEBUG"},
@@ -361,7 +411,7 @@ def activities_list_all_activities(request):
         "Upcoming Activities Count": 0,
         "Upcoming Activities": []
     }
-    if constants.DEBUG_LISTACTIVITY_INFO:
+    if constants.DEBUG_LISTALLACTIVITY_INFO:
         data = {**_data_info, **_data}
     else:
         data = _data
@@ -758,7 +808,7 @@ def store_search_item(request):
     received_data = read_request(request, "search commodities")
     _keys = received_data.keys()
 
-    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_EDITITEM_INFO
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_SEARCHITEM_INFO
     _data_info = {
         "Fields": [{"Fields": "DEBUG"}, {"Request": "DEBUG"},
                    {"Items": [
@@ -771,7 +821,7 @@ def store_search_item(request):
         "Request": received_data}
     _data = {"Items": [], "Items Count": 0,  # return with values only querying
              "Results": {"Fail": [], "Success": []}}  # return with values only submitting
-    if constants.DEBUG_EDITITEM_INFO:
+    if constants.DEBUG_SEARCHITEM_INFO:
         data = {**_data_info, **_data}
     else:
         data = _data
