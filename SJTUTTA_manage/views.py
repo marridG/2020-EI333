@@ -226,7 +226,7 @@ def form_commodity_info_dict(_item, show_id=False):
 
 
 @csrf_exempt
-def activities_list_all(request):
+def activities_list_user_related_activities(request):
     """
     for a LOGGED_IN user:
     handles the JSON request form "/app/activities/" and return JSON data
@@ -252,6 +252,7 @@ def activities_list_all(request):
     _data_info = {
         "Fields": [
             {"Fields": "DEBUG"}, {"Request User ID": "DEBUG"},
+            {"Ongoing Activities Count": None},
             {"Ongoing Activities": [
                 "start_time <= now < end_time",
                 "order by start_time, the more in the past, the more in the front",
@@ -274,6 +275,7 @@ def activities_list_all(request):
         "Request User ID": user_id
     }
     _data = {
+        "Ongoing Activities Count": 0,
         "Ongoing Activities": [],
         "Attended Activities Count": 0,
         "Attended Activities": [],
@@ -300,6 +302,83 @@ def activities_list_all(request):
             data["Upcoming Activities Count"] += 1
         else:  # ongoing
             data["Ongoing Activities"].append(_d)
+            data["Ongoing Activities Count"] += 1
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
+def activities_list_all_activities(request):
+    """
+    for a LOGGED_IN user:
+    handles the JSON request form "/app/activities/" and return JSON data
+        NOT authenticated:      Notification
+        authenticated:          Handle request.body and return JSON
+    Try for more details about "return".
+    :param request:     None (should include sessionid in Cookies to authenticate user/anonymous)
+    :return:    <json>  {"Fields": <list>some info, "Request": <json>requested data,
+                            "Ongoing Activities": <list> of <dict>, "Attended Activities Count": <int>,
+                            "Attended Activities": <list> of <dict>, "Upcoming Activities Count": <int>,
+                            "Upcoming Activities": <list> of <dict>}
+    """
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+    elif not request.user.has_perm("SJTUTTA_manage.view_Activities"):
+        return JsonResponse({"ERROR": "You are attempting to access activities list "
+                                      " without corresponding privileges."})
+
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_LISTACTIVITY_INFO
+    _data_info = {
+        "Fields": [
+            {"Fields": "DEBUG"},
+            {"Ongoing Activities Count": None},
+            {"Ongoing Activities": [
+                "start_time <= now < end_time",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"
+            ]},
+            {"Past Activities Count": None},
+            {"Past Activities": [
+                "not-ongoing & past event(s)"
+                "past: end_time <= now",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"
+            ]},
+            {"Upcoming Activities Count": None},
+            {"Upcoming Activities": [
+                "not-ongoing & upcoming event(s)",
+                "upcoming: now < start_time",
+                "order by start_time, the more in the past, the more in the front",
+                "attributes of 'time'(start&end) follows 'time.struct_time'"]}
+        ],
+    }
+    _data = {
+        "Ongoing Activities Count": 0,
+        "Ongoing Activities": [],
+        "Past Activities Count": 0,
+        "Past Activities": [],
+        "Upcoming Activities Count": 0,
+        "Upcoming Activities": []
+    }
+    if constants.DEBUG_LISTACTIVITY_INFO:
+        data = {**_data_info, **_data}
+    else:
+        data = _data
+
+    activities_lst = Activities.objects.order_by("activity_start_time")
+    for _act in activities_lst:
+        _d = form_activity_info_dict(_act=_act, show_id=True)
+
+        if _act.activity_end_time < now:  # past
+            data["Past Activities"].append(_d)
+            data["Past Activities Count"] += 1
+        elif now < _act.activity_start_time:  # upcoming
+            data["Upcoming Activities"].append(_d)
+            data["Upcoming Activities Count"] += 1
+        else:  # ongoing
+            data["Ongoing Activities"].append(_d)
+            data["Ongoing Activities Count"] += 1
 
     return JsonResponse(data)
 
@@ -862,7 +941,6 @@ def user_show_info_batch(request):
 
         target_obj = UserProfile.objects.get(user_id=user_id)
         data["Success"].append({user_id: form_user_info_dict(_user=target_obj, show_id=False)})
-
 
     return JsonResponse(data)
 

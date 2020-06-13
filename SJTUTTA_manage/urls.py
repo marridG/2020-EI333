@@ -5,7 +5,8 @@ from . import views
 # urls below are only used for posting and getting data in json formula
 urlpatterns = [
     # [Activities]
-    path("app/activities/", views.activities_list_all),
+    path("app/activities/user/", views.activities_list_user_related_activities),
+    path("app/activities/all/", views.activities_list_all_activities),
     path("app/activities/new/", views.activities_new_activity),
     path("app/activities/rollcall/", views.rollcall_activity),
     path("app/activities/participants/", views.activities_list_participants),
