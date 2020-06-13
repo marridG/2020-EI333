@@ -13,6 +13,7 @@ urlpatterns = [
 
     # [Store]
     path("app/store/items/", views.store_list_items),
+    path("app/store/items/search/", views.store_search_item),
     path("app/store/items/new/", views.store_new_item),
     path("app/store/items/edit/", views.store_edit_item),
 

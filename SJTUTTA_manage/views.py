@@ -743,6 +743,64 @@ def store_list_items(request):
 
 
 @csrf_exempt
+def store_search_item(request):
+    """
+    :param request:
+         (.body)<json>  {"Items Query": <dict>
+                             {"type": <str>/None, "title": <str>/None, "sold by": <str>/None
+                                 "availability": <str, as bool: True/False>/None}}
+            * should include sessionid in Cookies to authenticate user/admin
+    :return:
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+
+    received_data = read_request(request, "search commodities")
+    _keys = received_data.keys()
+
+    # "_data_info": some info in return JSON for DEBUG, in/ex-clude by constants.DEBUG_EDITITEM_INFO
+    _data_info = {
+        "Fields": [{"Fields": "DEBUG"}, {"Request": "DEBUG"},
+                   {"Items": [
+                       "queried items",
+                       "order by availability(True->False), then ascending by type, title",
+                   ]},
+                   {"Items Count": ""},
+                   {"Results": "<dict> Status of Submitting the Edits"
+                               "{Fail:<list>Message} and {Success:<list>ID}"}],
+        "Request": received_data}
+    _data = {"Items": [], "Items Count": 0,  # return with values only querying
+             "Results": {"Fail": [], "Success": []}}  # return with values only submitting
+    if constants.DEBUG_EDITITEM_INFO:
+        data = {**_data_info, **_data}
+    else:
+        data = _data
+
+    res_query_obj = StoreItems.objects.order_by("-commodity_status_availability"). \
+        order_by("commodity_info_type").order_by("commodity_info_title")
+    in_dt = eval(str(received_data.get("Items Query")))
+    in_type = in_dt.get("type")
+    in_title = in_dt.get("title")
+    in_sold_by = in_dt.get("sold by")
+    in_availability = in_dt.get("availability")
+    if in_type:
+        res_query_obj = res_query_obj.filter(commodity_info_type__icontains=in_type)
+    if in_title:
+        res_query_obj = res_query_obj.filter(commodity_info_title__icontains=in_title)
+    if in_sold_by:
+        res_query_obj = res_query_obj.filter(commodity_info_sold_by__icontains=in_sold_by)
+    if in_availability:
+        res_query_obj = res_query_obj.filter(commodity_status_availability=in_availability)
+
+    for _itm in res_query_obj:
+        _d = form_commodity_info_dict(_item=_itm, show_id=True)
+        data["Items"].append(_d)
+        data["Items Count"] += 1
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
 def store_new_item(request):
     """
     :param request:
