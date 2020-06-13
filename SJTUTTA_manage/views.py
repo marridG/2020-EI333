@@ -749,7 +749,7 @@ def store_new_item(request):
         (.body)<json> {"Info": None/{"type": <str>/None, "title": <str>/None,
                                 "size": <str>/None, "description": <str>/None,
                                 "image": <str>/None, "price": <str, as float>/None,
-                                "sold by": <str>/None}
+                                "sold_by": <str>/None}
                         "Status": None/{"stock": <str, as int>/None,
                                     "availability": <str, as bool: True/False>/None}}
             * should include sessionid in Cookies to authenticate user/admin
@@ -776,7 +776,7 @@ def store_new_item(request):
                      "commodity_info_description": info.get("description"),
                      "commodity_info_image": info.get("image"),
                      "commodity_info_price": info.get("price"),
-                     "commodity_info_sold_by": info.get("sold by"),
+                     "commodity_info_sold_by": info.get("sold_by"),
                      "commodity_status_stock": status.get("stock"),
                      "commodity_status_availability": status.get("availability")}
         # delete empty key-value
