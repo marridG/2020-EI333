@@ -489,8 +489,10 @@ def activities_new_activity(request):
     try:
         received_data = read_request(request, "add new activities")
 
-        in_start_time = tz.localize(datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M"))
-        in_end_time = tz.localize(datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M"))
+        # in_start_time = tz.localize(datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M"))
+        # in_end_time = tz.localize(datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M"))
+        in_start_time = datetime.strptime(received_data.get("start time"), "%Y-%m-%d %H:%M")
+        in_end_time = datetime.strptime(received_data.get("end time"), "%Y-%m-%d %H:%M")
 
         if in_start_time >= in_end_time:
             return JsonResponse({"Error": "Invalid Request: Start Time Later than End Time"})
@@ -1308,5 +1310,7 @@ def get_order(request):
 # bj_CST = timezone(timedelta(hours=8))
 # now = datetime.now().astimezone(bj_CST)
 
-tz = pytz.timezone('Asia/Shanghai')
-now = tz.localize(datetime.now())
+# tz = pytz.timezone('Asia/Shanghai')
+# now = tz.localize(datetime.now())
+
+now = datetime.now()
