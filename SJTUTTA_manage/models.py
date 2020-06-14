@@ -135,10 +135,11 @@ class Order(models.Model):
                                 default=uuid.uuid4,
                                 editable=False)
     # info
-    commodity_id = models.CharField("Commodity ID",
-                                    editable=False,
-                                    blank=False,
-                                    max_length=32)
+    # commodity_id = models.CharField("Commodity ID",
+    #                                 editable=False,
+    #                                 blank=False,
+    #                                 max_length=32)
+    commodity = models.ForeignKey("StoreItems", on_delete=models.CASCADE)
     # PositiveSmallIntegerField: meets 0-32767 integer
     item_count = models.PositiveSmallIntegerField("Count of Item",
                                                   editable=False,
@@ -150,14 +151,15 @@ class Order(models.Model):
                                           editable=False,
                                           blank=False,
                                           default=now)
-    buyer_email = models.EmailField('Customer Email Address',
-                                    editable=False,
-                                    blank=False)
-    seller_info = models.CharField("Seller Info",
-                                   editable=False,
-                                   blank=False,
-                                   default=constants.ORDER_SELLER_INFO_DEF,
-                                   max_length=constants.ORDER_INFO_MAX_LENGTH)
+    # buyer_email = models.EmailField('Customer Email Address',
+    #                                 editable=False,
+    #                                 blank=False)
+    user = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
+    # seller_info = models.CharField("Seller Info",
+    #                                editable=False,
+    #                                blank=False,
+    #                                default=constants.ORDER_SELLER_INFO_DEF,
+    #                                max_length=constants.ORDER_INFO_MAX_LENGTH)
     pay_qr_code = models.TextField("QR Code URL for Payment",
                                    editable=False,
                                    blank=False,
@@ -175,24 +177,16 @@ class Order(models.Model):
                                     max_length=constants.ORDER_INFO_MAX_LENGTH)
 
     def __str__(self):
-        return "order_id: {}, " \
-               "commodity_id: {}, " \
-               "item_count: {}, " \
-               "total_price: {}, " \
-               "order_datetime: {}, " \
-               "buyer_email: {}, " \
-               "seller_info: {}, " \
-               "pay_qr_code: {}, " \
-               "order_status: {}" \
-            .format(self.order_id,
-                    self.commodity_id,
+        return "商品名称: {}, " \
+               "购买数量: {}, " \
+               "总价: {}, " \
+               "买家用户名: {}, " \
+               "买家手机号: {}, " \
+            .format(self.commodity.commodity_info_title,
                     self.item_count,
                     self.total_price,
-                    self.order_datetime,
-                    self.buyer_email,
-                    self.seller_info,
-                    self.pay_qr_code,
-                    self.order_status)
+                    self.user.username,
+                    self.user.user_phone)
 
     class Meta:
         verbose_name_plural = "Order"

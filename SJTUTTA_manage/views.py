@@ -1276,8 +1276,9 @@ def get_order(request):
     # buyer_email = received_data.get("buyer_email")
     commodity_dict = received_data.get("items")
 
-    user_id = request.user.user_id
-    buyer_email = UserProfile.objects.get(user_id=user_id).email
+    # user_id = request.user.user_id
+    # buyer_email = UserProfile.objects.get(user_id=user_id).email
+    user = request.user
 
     for (k, v) in commodity_dict.items():
         try:
@@ -1292,11 +1293,13 @@ def get_order(request):
             _data["order_id"] = [],
             _data["RequestStatus"] = "SomeCommodityNotExist"
             return JsonResponse(_data)
-        order = Order.objects.create(commodity_id=k,
+        # order = Order.objects.create(commodity_id=k,
+        order = Order.objects.create(commodity=commodity,
                                      item_count=v,
                                      total_price=v * commodity.commodity_info_price,
-                                     buyer_email=buyer_email,
-                                     seller_info=commodity.commodity_info_sold_by)
+                                     # buyer_email=buyer_email,
+                                     user=user)
+        #                            seller_info=commodity.commodity_info_sold_by)
         _data["order_id"].append(order.order_id)
         _data["total_price"] += order.total_price
 
