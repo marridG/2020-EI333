@@ -762,8 +762,28 @@ def rollcall_activity(request):
 
 
 @csrf_exempt
-def store_list_items(request):
+def store_items_counts(request):
     """
+    return items counts
+    :param request:  None
+            * should include sessionid in Cookies to authenticate user/admin
+    :return:  (.body)<json>   {"Available Count": <int>, "IUavailable Count": <int>}
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
+
+    items_aval = StoreItems.objects.filter(commodity_status_availability=True)
+    items_unaval = StoreItems.objects.filter(commodity_status_availability=False)
+
+    data = {"Available Count": items_aval.count(), "Unavailable Count": items_unaval.count()}
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
+def store_list_available_items(request):
+    """
+    list all available items
     :param request:
         (.body)<json> None / {"Page Limit": <str, as int>, "Page": <str, as int>}
             * should include sessionid in Cookies to authenticate user/admin
@@ -774,7 +794,7 @@ def store_list_items(request):
     if not request.user.is_authenticated:
         return JsonResponse({"ERROR": "Anonymous Access is Forbidden"})
 
-    items = StoreItems.objects.all()
+    items = StoreItems.objects.filter(commodity_status_availability=True)
 
     if request.body:
         try:
