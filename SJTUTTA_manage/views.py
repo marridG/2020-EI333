@@ -780,9 +780,13 @@ def store_list_items(request):
             page_lim = int(received_data.get("Page Limit"))
             page = int(received_data.get("Page"))
 
-            lb = (page - 1) * page_lim
-            ub = page * page_lim - 1
-            items = items[lb:ub + 1]
+            lb_idx = (page - 1) * page_lim
+            ub_idx_excluded = min(page * page_lim, items.count())
+
+            if lb_idx >= items.count():
+                raise RuntimeError("Invalid Request: Index  Out of Range")
+
+            items = items[lb_idx:ub_idx_excluded]
         except TypeError as e:
             raise RuntimeError("Invalid Request: %s" % e)
 
