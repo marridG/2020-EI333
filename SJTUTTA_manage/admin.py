@@ -66,6 +66,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class OrderAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "order_datetime", "order_status", ]
     list_filter = ["order_status", ]
 
 
