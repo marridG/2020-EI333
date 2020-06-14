@@ -784,7 +784,8 @@ def store_list_items(request):
             ub_idx_excluded = min(page * page_lim, items.count())
 
             if lb_idx >= items.count():
-                raise RuntimeError("Invalid Request: Index  Out of Range")
+                raise RuntimeError("Invalid Request: Index Out of Range"
+                                   " (Starting from a Nonexistent Item)")
 
             items = items[lb_idx:ub_idx_excluded]
         except TypeError as e:
