@@ -343,11 +343,11 @@ def activities_list_user_related_activities(request):
             activity__activity_id=_act.activity_id, participant__user_id=user_id).exists()
         _d = form_activity_info_dict(_act=_act, show_id=True)
 
-        if _act.activity_end_time < now:  # attended
+        if _act.activity_end_time < get_time():  # attended
             if _attended:
                 data["Attended Activities"].append(_d)
                 data["Attended Activities Count"] += 1
-        elif now < _act.activity_start_time:  # upcoming
+        elif get_time() < _act.activity_start_time:  # upcoming
             data["Upcoming Activities"].append(_d)
             data["Upcoming Activities Count"] += 1
         else:  # ongoing
@@ -420,10 +420,10 @@ def activities_list_all_activities(request):
     for _act in activities_lst:
         _d = form_activity_info_dict(_act=_act, show_id=True)
 
-        if _act.activity_end_time < now:  # past
+        if _act.activity_end_time < get_time():  # past
             data["Past Activities"].append(_d)
             data["Past Activities Count"] += 1
-        elif now < _act.activity_start_time:  # upcoming
+        elif get_time() < _act.activity_start_time:  # upcoming
             data["Upcoming Activities"].append(_d)
             data["Upcoming Activities Count"] += 1
         else:  # ongoing
@@ -711,7 +711,7 @@ def rollcall_activity(request):
             res_query_obj = res_query_obj.filter(user_SJTUID__contains=in_sjtuid)
 
         for _act in res_query_obj:
-            if _act.user_expire_date < now.date():
+            if _act.user_expire_date < get_time().date():
                 continue
             _d = form_user_info_dict(_user=_act, show_id=True)
             data["Users"].append(_d)
@@ -741,7 +741,7 @@ def rollcall_activity(request):
             data["Failed"] = "Failed at Submit: %s" % (str(err))
             return JsonResponse(data)
 
-        if user_obj.user_expire_date <= now.date():  # expired user
+        if user_obj.user_expire_date <= get_time().date():  # expired user
             data["Failed"] = "Expired Participant"
             return JsonResponse(data)
 
@@ -1329,11 +1329,13 @@ def get_order(request):
     return JsonResponse(_data)
 
 
-# local time, as Beijing (CST, UTC+8)
-# bj_CST = timezone(timedelta(hours=8))
-# now = datetime.now().astimezone(bj_CST)
+def get_time():
+    # local time, as Beijing (CST, UTC+8)
+    # bj_CST = timezone(timedelta(hours=8))
+    # now = datetime.now().astimezone(bj_CST)
 
-# tz = pytz.timezone('Asia/Shanghai')
-# now = tz.localize(datetime.now())
+    # tz = pytz.timezone('Asia/Shanghai')
+    # now = tz.localize(datetime.now())
 
-now = datetime.now()
+    now = datetime.now()
+    return now
